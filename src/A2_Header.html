@@ -1,0 +1,38 @@
+<!-- ==================== A2_Header.html — App Header ==================== -->
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shrink-0 dark:bg-gray-800 dark:border-gray-700 shadow-sm z-10">
+  <div class="flex items-center gap-3">
+    <button @click="toggleSidebar" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 md:hidden">
+      <i class="ph ph-list text-2xl"></i>
+    </button>
+    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2 dark:text-white">
+      <i :class="currentMenuIcon" class="text-brand-600 dark:text-brand-400"></i>
+      {{ currentPageLabel }}
+    </h1>
+  </div>
+  
+  <div class="flex items-center gap-2 md:gap-4">
+    <button v-if="['users','audit','files','roles','permissions','settings','notifications'].includes(currentPage)" @click="exportCSV(currentPage)" class="btn btn-secondary hidden sm:flex">
+      <i class="ph ph-file-csv"></i> Export CSV
+    </button>
+    
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden md:block"></div>
+
+    <button @click="fetchData(true)" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-brand-600 dark:text-brand-400" title="Muat Ulang Data">
+      <i class="ph ph-arrows-clockwise text-xl" :class="{'animate-spin': isSyncing}"></i>
+    </button>
+
+    <button @click="toggleDarkMode" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300" :title="isDarkMode ? 'Mode Terang' : 'Mode Gelap'">
+      <i :class="isDarkMode ? 'ph ph-sun text-xl' : 'ph ph-moon text-xl'"></i>
+    </button>
+
+    <div class="flex items-center gap-2 pl-2">
+      <div class="text-right hidden md:block">
+        <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{{ session.user.display_name || 'Administrator' }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 max-w-[120px] truncate" :title="session.user.email">{{ session.user.email }}</p>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 border border-brand-200 flex items-center justify-center font-bold text-sm uppercase dark:bg-brand-900/50 dark:text-brand-300 dark:border-brand-700">
+        {{ (session.user.email || 'AD').substring(0,2) }}
+      </div>
+    </div>
+  </div>
+</header>

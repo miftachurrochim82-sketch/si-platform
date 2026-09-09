@@ -1,0 +1,74 @@
+<!-- ==================== A0_Login.html — Authentication Screen ==================== -->
+<div v-if="!session.token" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 p-4 relative overflow-hidden">
+  <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-brand-400/20 rounded-full blur-3xl"></div>
+
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md dark:bg-gray-800 relative z-10 border border-white/20">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 text-brand-600 mb-4 shadow-inner dark:bg-gray-700 dark:text-brand-400">
+        <i class="ph ph-shield-check text-5xl"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">SI Platform</h1>
+      <p class="text-sm text-gray-500 mt-2 dark:text-gray-400">Masuk ke Admin Console Terpadu</p>
+    </div>
+
+    <!-- Form Login Manual -->
+    <form @submit.prevent="loginWithPassword" class="space-y-4">
+      <div>
+        <label class="form-label">Email atau Username</label>
+        <input 
+          v-model="loginForm.identifier" 
+          type="text" 
+          class="form-input" 
+          placeholder="nama@email.com atau username" 
+          required
+        >
+      </div>
+      <div>
+        <label class="form-label">Password</label>
+        <input 
+          v-model="loginForm.password" 
+          type="password" 
+          class="form-input" 
+          placeholder="********" 
+          required
+        >
+      </div>
+      <button 
+        type="submit" 
+        class="w-full btn btn-primary py-3 text-base flex justify-center items-center gap-3 transition-transform active:scale-[0.98]" 
+        :disabled="loginLoading"
+      >
+        <i v-if="!loginLoading" class="ph ph-sign-in text-xl"></i>
+        <i v-else class="ph ph-spinner animate-spin text-xl"></i>
+        <span>{{ loginLoading ? 'Memproses Autentikasi...' : 'Masuk' }}</span>
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+      </div>
+      <div class="relative flex justify-center text-sm">
+        <span class="px-2 bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">atau</span>
+      </div>
+    </div>
+
+    <!-- Login dengan Google -->
+    <button 
+      @click="login" 
+      class="w-full btn btn-secondary py-3 text-base flex justify-center items-center gap-3 transition-transform active:scale-[0.98]" 
+      :disabled="loginLoading"
+    >
+      <i v-if="!loginLoading" class="ph ph-google-logo text-xl"></i>
+      <i v-else class="ph ph-spinner animate-spin text-xl"></i>
+      <span>{{ loginLoading ? 'Menghubungkan...' : 'Login dengan Google' }}</span>
+    </button>
+
+    <div v-if="loginError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-red-600 text-sm dark:bg-red-900/30 dark:border-red-800 dark:text-red-300">
+      <i class="ph ph-warning-circle text-lg mt-0.5"></i>
+      <span>{{ loginError }}</span>
+    </div>
+  </div>
+</div>

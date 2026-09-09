@@ -1,0 +1,31 @@
+<!-- ==================== A1_Sidebar.html — Navigation Sidebar ==================== -->
+<aside class="bg-brand-900 text-white flex flex-col transition-all duration-300 z-30 shrink-0 shadow-xl fixed md:relative h-full"
+       :class="[sidebarCollapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-64']">
+  <div class="flex items-center justify-between h-16 px-4 border-b border-brand-800 bg-brand-950">
+    <div v-show="!sidebarCollapsed || isMobile" class="flex items-center gap-2 font-bold text-lg truncate w-full">
+      <i class="ph ph-shield-check text-brand-400 text-2xl"></i>
+      <span>SI Platform</span>
+    </div>
+    <button @click="toggleSidebar" class="p-1.5 rounded-lg text-brand-300 hover:text-white hover:bg-brand-800 transition-colors mx-auto hidden md:block" :title="sidebarCollapsed ? 'Perluas' : 'Ciutkan'">
+      <i :class="sidebarCollapsed ? 'ph ph-list text-xl' : 'ph ph-caret-left text-lg'"></i>
+    </button>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar space-y-1">
+    <button v-for="item in allowedMenuItems" :key="item.key" 
+            @click="switchPage(item.key)" 
+            class="nav-item group" 
+            :class="{ 'active': currentPage === item.key, 'md:justify-center md:px-0': sidebarCollapsed }"
+            :title="item.label">
+      <i :class="item.icon" class="text-xl shrink-0 group-hover:scale-110 transition-transform"></i>
+      <span v-show="!sidebarCollapsed || isMobile" class="truncate">{{ item.label }}</span>
+    </button>
+  </nav>
+
+  <div class="p-4 border-t border-brand-800 bg-brand-950">
+    <button @click="confirmLogout" class="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-transparent hover:border-red-400" :class="sidebarCollapsed && !isMobile ? 'px-0' : ''" title="Logout">
+      <i class="ph ph-power text-xl"></i>
+      <span v-show="!sidebarCollapsed || isMobile" class="font-medium">Logout</span>
+    </button>
+  </div>
+</aside>
