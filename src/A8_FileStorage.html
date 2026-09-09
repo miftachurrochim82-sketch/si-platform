@@ -1,0 +1,127 @@
+<!-- ==================== A8_FileStorage.html — File Storage View & Upload Modal ==================== -->
+<div v-if="currentPage === 'files' && !loading" class="space-y-4">
+  <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <div class="w-full sm:w-auto flex items-center gap-2">
+      <i class="ph ph-funnel text-gray-400"></i>
+      <select v-model="filters.files.folder_id" @change="fetchData" class="form-input bg-gray-50 dark:bg-gray-900 w-full sm:w-64">
+        <option value="">Semua Folder (Root)</option>
+        <option v-for="folder in data.folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+      </select>
+    </div>
+    <div class="flex gap-2 w-full sm:w-auto">
+      <button v-if="selectedFiles.length" @click="bulkDeleteFiles" class="btn btn-danger w-full sm:w-auto">
+        <i class="ph ph-trash"></i> Hapus Terpilih
+      </button>
+      <button @click="openUploadModal" class="btn btn-primary w-full sm:w-auto shadow-brand-500/30">
+        <i class="ph ph-upload-simple"></i> Upload File
+      </button>
+    </div>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th w-12 text-center">
+            <input type="checkbox" @change="toggleAllFiles" :checked="allFilesSelected" class="rounded accent-brand-600 h-4 w-4">
+          </th>
+          <th class="table-th cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" @click="sortFiles('original_name')">Nama File <i class="ph ph-arrows-down-up text-xs ml-1"></i></th>
+          <th class="table-th">Lokasi</th>
+          <th class="table-th cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" @click="sortFiles('size')">Ukuran <i class="ph ph-arrows-down-up text-xs ml-1"></i></th>
+          <th class="table-th cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" @click="sortFiles('created_at')">Tgl Upload <i class="ph ph-arrows-down-up text-xs ml-1"></i></th>
+          <th class="table-th text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        <tr v-if="!data.files.length">
+          <td colspan="6" class="empty-state">
+            <i class="ph ph-file-dashed text-4xl mb-2 text-gray-400"></i>
+            <p>Belum ada file yang diunggah.</p>
+            <button @click="openUploadModal" class="btn btn-primary mt-4"><i class="ph ph-upload-simple"></i> Upload File Pertama</button>
+          </td>
+        </tr>
+        <tr v-for="file in data.files" :key="file.id" class="hover:bg-brand-50/50 dark:hover:bg-gray-700/50 group">
+          <td class="table-td text-center">
+            <input type="checkbox" v-model="selectedFiles" :value="file.id" class="rounded accent-brand-600 h-4 w-4">
+          </td>
+          <td class="table-td">
+            <div class="flex items-center gap-3">
+              <i class="ph ph-file-text text-2xl text-gray-400"></i>
+              <span class="font-medium text-gray-900 max-w-[200px] truncate dark:text-white" :title="file.original_name">{{ file.original_name }}</span>
+            </div>
+          </td>
+          <td class="table-td text-gray-500 dark:text-gray-400">
+            <span class="bg-gray-100 px-2 py-1 rounded text-xs border border-gray-200 dark:bg-gray-800 dark:border-gray-600 flex items-center w-max">
+              <i class="ph ph-folder-notch mr-1 text-amber-500"></i> {{ folderName(file.folder_id) }}
+            </span>
+          </td>
+          <td class="table-td text-gray-500 text-xs dark:text-gray-400">{{ formatBytes(file.size) }}</td>
+          <td class="table-td text-gray-500 text-xs dark:text-gray-400">{{ formatDate(file.created_at) }}</td>
+          <td class="table-td">
+            <div class="flex items-center justify-end gap-2 pr-2 sm:pr-4">
+              <button @click="downloadFile(file.id)" class="p-1.5 rounded bg-brand-50 text-brand-600 hover:bg-brand-100 dark:bg-brand-900/30 dark:text-brand-400" title="Download"><i class="ph ph-download-simple text-lg"></i></button>
+              <button @click="deleteFile(file.id)" class="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400" title="Hapus"><i class="ph ph-trash text-lg"></i></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="files" :current-page="currentPages.files" :total-pages="fileTotalPages" @prev="prevPage('files')" @next="nextPage('files')" />
+  </div>
+</div>
+
+<!-- ================= MODALS FOR FILE STORAGE ================= -->
+<teleport to="body">
+  <!-- Upload File Modal -->
+  <transition name="modal">
+    <div v-if="showUploadModal" class="modal-overlay" @click.self="showUploadModal=false">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="text-lg font-bold dark:text-white">Upload Dokumen</h3>
+          <button @click="showUploadModal=false" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-4">
+          <div>
+            <label class="form-label">Pilih Dokumen</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-brand-500 hover:bg-brand-50/30 transition-all bg-gray-50 relative group dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-brand-500"
+                 @dragover.prevent @dragenter.prevent @drop.prevent="handleDrop">
+              <div class="space-y-2 text-center">
+                <i class="ph ph-cloud-arrow-up text-5xl text-brand-400 group-hover:text-brand-500 transition-colors"></i>
+                <div class="flex flex-col text-sm text-gray-600 justify-center dark:text-gray-300">
+                  <label class="relative cursor-pointer bg-brand-100 dark:bg-brand-900/50 rounded-md font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 px-3 py-1 mb-2 inline-block mx-auto">
+                    <span>Telusuri File</span>
+                    <input type="file" ref="fileInput" @change="onFileSelected" class="sr-only" />
+                  </label>
+                  <p>atau seret (drag & drop) ke area ini</p>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Ukuran Maksimal: 10MB</p>
+              </div>
+            </div>
+            <div v-if="uploadData.file_name" class="mt-3 p-3 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-800 flex items-center gap-3 dark:bg-brand-900/30 dark:border-brand-800 dark:text-brand-300">
+              <i class="ph ph-file-check text-2xl"></i> 
+              <div class="flex-1 truncate">
+                <p class="font-semibold truncate">{{ uploadData.file_name }}</p>
+                <p class="text-xs opacity-80">{{ formatBytes(uploadData.file_size) }}</p>
+              </div>
+              <button @click="uploadData.file_name=''" class="text-gray-400 hover:text-red-500"><i class="ph ph-x-circle text-xl"></i></button>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Simpan di Direktori/Folder</label>
+            <select v-model="uploadData.folder_id" class="form-input">
+              <option value="">Folder Utama (Root)</option>
+              <option v-for="folder in data.folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showUploadModal=false" class="btn btn-secondary">Batal</button>
+          <button @click="uploadFile" class="btn btn-primary" :disabled="uploading || !uploadData.data_base64">
+            <i v-if="uploading" class="ph ph-spinner animate-spin"></i>
+            <i v-else class="ph ph-upload-simple"></i>
+            {{ uploading ? 'Proses Upload...' : 'Mulai Upload' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>      
+</teleport>

@@ -1,0 +1,195 @@
+<!-- ==================== A9_Notifikasi.html — Notifications View & Modals ==================== -->
+<div v-if="currentPage === 'notifications' && !loading" class="space-y-6">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <h2 class="text-lg font-bold dark:text-white">Riwayat Notifikasi Terkirim</h2>
+    <div class="flex gap-2 w-full sm:w-auto">
+      <button @click="openCreateTemplateModal" class="btn btn-secondary w-full sm:w-auto"><i class="ph ph-plus"></i> Template</button>
+      <button @click="openSendNotificationModal" class="btn btn-primary w-full sm:w-auto shadow-brand-500/30"><i class="ph ph-paper-plane-right"></i> Kirim Pesan</button>
+    </div>
+  </div>
+  
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th">Subjek Pesan</th>
+          <th class="table-th">Status</th>
+          <th class="table-th">Channel</th>
+          <th class="table-th">Waktu Kirim</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        <tr v-if="!paginatedNotifications.length">
+          <td colspan="4" class="empty-state">
+            <i class="ph ph-bell-ringing text-4xl mb-2 text-gray-400"></i>
+            <p>Tidak ada notifikasi.</p>
+          </td>
+        </tr>
+        <tr v-for="notif in paginatedNotifications" :key="notif.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+          <td class="table-td font-medium text-gray-900 dark:text-white">{{ notif.subject }}</td>
+          <td class="table-td">
+            <span class="badge border" :class="notif.status === 'sent' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : notif.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800' : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'">
+              {{ notif.status }}
+            </span>
+          </td>
+          <td class="table-td text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{{ notif.channel || 'EMAIL' }}</td>
+          <td class="table-td text-gray-500 dark:text-gray-400 text-xs">{{ formatDate(notif.created_at) }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="notifications" :current-page="currentPages.notifications" :total-pages="notificationTotalPages" @prev="prevPage('notifications')" @next="nextPage('notifications')" />
+  </div>
+
+  <h2 class="text-lg font-bold dark:text-white mt-8">Manajemen Template Notifikasi</h2>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th">Kode Template</th>
+          <th class="table-th">Nama Template</th>
+          <th class="table-th">Channel</th>
+          <th class="table-th text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        <tr v-if="!paginatedTemplates.length">
+          <td colspan="4" class="empty-state">
+            <i class="ph ph-envelope-simple text-4xl mb-2 text-gray-400"></i>
+            <p>Belum ada template tersimpan.</p>
+          </td>
+        </tr>
+        <tr v-for="tpl in paginatedTemplates" :key="tpl.id" class="hover:bg-brand-50/50 dark:hover:bg-gray-700/50 group">
+          <td class="table-td font-mono text-xs text-brand-700 font-bold dark:text-brand-400">{{ tpl.code }}</td>
+          <td class="table-td text-gray-900 dark:text-white">{{ tpl.name }}</td>
+          <td class="table-td text-gray-500 dark:text-gray-400 uppercase text-xs">{{ tpl.channel }}</td>
+          <td class="table-td">
+             <div class="flex justify-end pr-2 sm:pr-4">
+               <button @click="openEditTemplateModal(tpl)" class="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400" title="Edit Template"><i class="ph ph-pencil-simple text-lg"></i></button>
+             </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="templates" :current-page="currentPages.templates" :total-pages="totalPages.templates" @prev="prevPage('templates')" @next="nextPage('templates')" />
+  </div>
+</div>
+
+<!-- ================= MODALS FOR NOTIFIKASI ================= -->
+<teleport to="body">
+  <!-- Send Notification Modal -->
+  <transition name="modal">
+    <div v-if="showSendNotificationModal" class="modal-overlay" @click.self="showSendNotificationModal=false">
+      <div class="modal-box max-w-2xl">
+        <div class="modal-header">
+          <h3 class="text-lg font-bold dark:text-white">Kirim Notifikasi/Pesan Baru</h3>
+          <button @click="showSendNotificationModal=false" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Pilih Channel</label>
+              <select v-model="notificationForm.channel" class="form-input">
+                <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="push">Push Notification</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Gunakan Template (Opsional)</label>
+              <select v-model="notificationForm.template_code" @change="onTemplateChange" class="form-input">
+                <option value="">-- Buat Pesan Kustom --</option>
+                <option v-for="tpl in data.notificationTemplates" :key="tpl.id" :value="tpl.code">{{ tpl.name }} ({{ tpl.channel }})</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Subjek/Judul Pesan</label>
+            <input v-model="notificationForm.subject" class="form-input" placeholder="Masukkan judul notifikasi">
+          </div>
+          <div>
+            <label class="form-label">Penerima <span class="text-xs text-gray-500 font-normal">(Pisahkan dengan koma jika lebih dari satu)</span></label>
+            <input v-model="notificationForm.recipients" class="form-input" placeholder="email1@contoh.com, email2@contoh.com">
+          </div>
+          <div v-if="templateVariables.length" class="p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <h4 class="text-sm font-semibold mb-2 dark:text-white">Variabel Template</h4>
+            <div v-for="v in templateVariables" :key="v" class="flex items-center gap-2 mb-2">
+              <label class="text-sm text-gray-600 dark:text-gray-300 w-24">{{ v }}:</label>
+              <input v-model="notificationVariables[v]" class="form-input" :placeholder="'Nilai untuk ' + v">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Isi Pesan (Body)</label>
+            <textarea v-model="notificationForm.body" rows="6" class="form-input" placeholder="Ketik pesan Anda di sini..."></textarea>
+          </div>
+          <!-- Preview -->
+          <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <p class="text-xs font-semibold mb-1 dark:text-gray-300">Preview</p>
+            <p class="text-sm whitespace-pre-line text-gray-700 dark:text-gray-200">{{ notificationPreview }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showSendNotificationModal=false" class="btn btn-secondary">Batal</button>
+          <button @click="sendNotification" class="btn btn-primary" :disabled="sendingNotification || !notificationForm.subject || !notificationForm.body || !notificationForm.recipients">
+            <i v-if="sendingNotification" class="ph ph-paper-plane-tilt animate-bounce"></i>
+            <i v-else class="ph ph-paper-plane-right"></i>
+            {{ sendingNotification ? 'Mengirim...' : 'Kirim Sekarang' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Create/Edit Notification Template Modal -->
+  <transition name="modal">
+    <div v-if="showTemplateModal" class="modal-overlay" @click.self="closeTemplateModal">
+      <div class="modal-box max-w-2xl">
+        <div class="modal-header">
+          <h3 class="text-lg font-bold dark:text-white">{{ templateModalMode === 'create' ? 'Buat Template Baru' : 'Edit Template Notifikasi' }}</h3>
+          <button @click="closeTemplateModal" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Kode Template (Unik)</label>
+              <input v-model="templateForm.code" class="form-input font-mono" :disabled="templateModalMode === 'edit'" placeholder="welcome_email">
+            </div>
+            <div>
+              <label class="form-label">Channel Pengiriman</label>
+              <select v-model="templateForm.channel" class="form-input">
+                <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="push">Push Notification</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Nama/Label Template</label>
+            <input v-model="templateForm.name" class="form-input" placeholder="Email Selamat Datang">
+          </div>
+          <div>
+            <label class="form-label">Subjek Default</label>
+            <input v-model="templateForm.subject" class="form-input" placeholder="Subjek email...">
+          </div>
+          <div>
+            <label class="form-label flex justify-between">
+              Isi Template
+              <span v-pre class="text-xs text-brand-600 dark:text-brand-400">Gunakan {{nama_variabel}}</span>
+            </label>
+            <textarea v-model="templateForm.body_template" rows="5" class="form-input font-mono text-sm" placeholder="Halo {{ nama }}, selamat datang di platform kami."></textarea>
+          </div>
+          <div>
+            <label class="form-label">Daftar Variabel (Referensi)</label>
+            <input v-model="templateForm.variables" class="form-input text-sm" placeholder="nama, email, url_reset">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeTemplateModal" class="btn btn-secondary">Batal</button>
+          <button @click="saveTemplate" class="btn btn-primary" :disabled="savingTemplate || !isTemplateFormValid">
+            <i v-if="savingTemplate" class="ph ph-spinner animate-spin"></i>
+            {{ savingTemplate ? 'Menyimpan...' : 'Simpan Template' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>      
+</teleport>
