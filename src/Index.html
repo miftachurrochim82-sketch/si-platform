@@ -4,357 +4,1272 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SI-PLATFORM — Portal SSO & Master Data Pemkab Trenggalek</title>
+  <title>SI Platform - Admin Console Terpadu</title>
 
-  <!-- Dark Mode Pre-paint Script (Anti-Flicker) -->
+  <!-- Dark Mode Anti-Flicker Script -->
   <script>
     try {
-      if (localStorage.getItem('siplatform_dark') === 'true') {
+      if (localStorage.getItem('darkMode') === 'true') {
         document.documentElement.classList.add('dark');
       }
     } catch(e) {}
   </script>
 
-  <!-- CDN Dependencies -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' };</script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- Fonts & CDN Dependencies -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- 1. FRONTEND CDN SHARED CSS (v2.2.5) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.2.5/frontend/app-common.min.css">
+  <!-- Tailwind CSS CDN & Konfigurasi Tema -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              950: '#022c22'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <?!= include('A0_Style'); ?>
 </head>
-<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-['Inter'] antialiased">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased dark:bg-gray-900 dark:text-gray-100 selection:bg-brand-500 selection:text-white">
   <div id="app" v-cloak>
+    
+    <!-- ================= AUTH SCREEN ================= -->
+    <div v-if="!session.token" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 p-4 relative overflow-hidden">
+      <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-brand-400/20 rounded-full blur-3xl"></div>
 
-    <!-- ===== 1. LAYAR LOGIN PORTAL SSO ===== -->
-    <div v-if="!sessionToken" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900">
-      <div class="w-full max-w-md p-8 rounded-3xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl text-center space-y-6">
-        <!-- Brand Logo SVG -->
-        <div class="flex justify-center">
-          <div class="w-20 h-24 flex items-center justify-center drop-shadow-lg">
-            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' width='80' height='96'>
-              <path d='M50 5 L90 25 V65 C90 90 50 115 50 115 C50 115 10 90 10 65 V25 Z' fill='#1e3a8a' stroke='#f59e0b' stroke-width='4'/>
-              <path d='M50 15 L80 32 V62 C80 82 50 102 50 102 C50 102 20 82 20 62 V32 Z' fill='#047857'/>
-              <circle cx='50' cy='55' r='18' fill='#fbbf24'/>
-              <path d='M50 40 L54 50 L64 50 L56 56 L59 66 L50 60 L41 66 L44 56 L36 50 L46 50 Z' fill='#dc2626'/>
-              <text x='50' y='93' font-family='Arial, sans-serif' font-size='9' font-weight='bold' fill='#ffffff' text-anchor='middle'>TRENGGALEK</text>
-            </svg>
+      <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md dark:bg-gray-800 relative z-10 border border-white/20">
+        <div class="text-center mb-8">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 text-brand-600 mb-4 shadow-inner dark:bg-gray-700 dark:text-brand-400">
+            <i class="ph ph-shield-check text-5xl"></i>
+          </div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">SI Platform</h1>
+          <p class="text-sm text-gray-500 mt-2 dark:text-gray-400">Masuk ke Admin Console Terpadu</p>
+        </div>
+
+        <!-- Form Login Manual -->
+        <form @submit.prevent="loginWithPassword" class="space-y-4">
+          <div>
+            <label class="form-label">Email atau Username</label>
+            <input 
+              v-model="loginForm.identifier" 
+              type="text" 
+              class="form-input" 
+              placeholder="nama@email.com atau username" 
+              required
+            >
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input 
+              v-model="loginForm.password" 
+              type="password" 
+              class="form-input" 
+              placeholder="********" 
+              required
+            >
+          </div>
+          <button 
+            type="submit" 
+            class="w-full btn btn-primary py-3 text-base flex justify-center items-center gap-3 transition-transform active:scale-[0.98]" 
+            :disabled="loginLoading"
+          >
+            <i v-if="!loginLoading" class="ph ph-sign-in text-xl"></i>
+            <i v-else class="ph ph-spinner animate-spin text-xl"></i>
+            <span>{{ loginLoading ? 'Memproses Autentikasi...' : 'Masuk' }}</span>
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">atau</span>
           </div>
         </div>
 
-        <div>
-          <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SI-PLATFORM</h1>
-          <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">Portal SSO & Pusat Data SIMPEG</p>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Pemerintah Kabupaten Trenggalek</p>
-        </div>
+        <!-- Login dengan Google -->
+        <button 
+          @click="login" 
+          class="w-full btn btn-secondary py-3 text-base flex justify-center items-center gap-3 transition-transform active:scale-[0.98]" 
+          :disabled="loginLoading"
+        >
+          <i v-if="!loginLoading" class="ph ph-google-logo text-xl"></i>
+          <i v-else class="ph ph-spinner animate-spin text-xl"></i>
+          <span>{{ loginLoading ? 'Menghubungkan...' : 'Login dengan Google' }}</span>
+        </button>
 
-        <div class="pt-4 border-t border-slate-100 dark:border-slate-700">
-          <button @click="handlePortalLogin" :disabled="loggingIn"
-                  class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
-            <i v-if="loggingIn" class="fa-solid fa-spinner fa-spin"></i>
-            <i v-else class="fa-solid fa-right-to-bracket"></i>
-            <span>{{ loggingIn ? 'Memverifikasi Akun...' : 'Masuk dengan Akun Google / ASN' }}</span>
-          </button>
+        <div v-if="loginError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-red-600 text-sm dark:bg-red-900/30 dark:border-red-800 dark:text-red-300">
+          <i class="ph ph-warning-circle text-lg mt-0.5"></i>
+          <span>{{ loginError }}</span>
         </div>
-
-        <p class="text-[11px] text-slate-400 dark:text-slate-500">
-          Satu akun untuk seluruh aplikasi web dinas di Pemkab Trenggalek.
-        </p>
       </div>
     </div>
 
-    <!-- ===== 2. SHELL UTAMA PORTAL ===== -->
-    <div v-else class="min-h-screen flex flex-col">
-      <!-- Header Bar Portal -->
-      <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-sm shadow-md">
-            P
+    <!-- ================= MAIN APP ================= -->
+    <div v-else class="flex h-screen overflow-hidden">
+      
+      <div v-if="!sidebarCollapsed && isMobile" @click="sidebarCollapsed = true" class="fixed inset-0 bg-black/50 z-20 md:hidden backdrop-blur-sm transition-opacity"></div>
+
+      <!-- Sidebar -->
+      <?!= include('A1_Sidebar'); ?>
+
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-gray-50/50 dark:bg-gray-900/50 w-full">
+
+        <!-- Header -->
+        <?!= include('A2_Header'); ?>
+
+        <!-- Global Error -->
+        <div v-if="errorMessage" class="m-6 mb-0 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-start justify-between text-red-700 shadow-sm dark:bg-red-900/20 dark:text-red-300">
+          <div class="flex items-center gap-3">
+            <i class="ph ph-warning-circle text-xl"></i>
+            <span class="font-medium">{{ errorMessage }}</span>
           </div>
-          <div>
-            <h2 class="text-sm font-extrabold text-slate-900 dark:text-white leading-none">SI-PLATFORM</h2>
-            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Pemkab Trenggalek</p>
-          </div>
+          <button @click="errorMessage=''" class="text-red-500 hover:text-red-700"><i class="ph ph-x text-lg"></i></button>
         </div>
 
-        <!-- Tab Navigasi Menu Header -->
-        <div class="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-2xl">
-          <button @click="currentTab = 'apps'" :class="currentTab === 'apps' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
-            <i class="fa-solid fa-shapes"></i> <span>Aplikasi</span>
-          </button>
-          <button @click="currentTab = 'master'" :class="currentTab === 'master' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
-            <i class="fa-solid fa-database"></i> <span>Master Data SIMPEG</span>
-          </button>
-          <button v-if="isAdmin" @click="currentTab = 'registry'" :class="currentTab === 'registry' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
-            <i class="fa-solid fa-sliders"></i> <span>Kelola Aplikasi</span>
-          </button>
+        <!-- Content Scrollable -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 relative">
+          <div v-if="loading" class="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 dark:bg-gray-900/70">
+            <i class="ph ph-spinner animate-spin text-5xl text-brand-600 mb-4"></i>
+            <p class="text-gray-600 font-medium dark:text-gray-300 animate-pulse">Memuat data...</p>
+          </div>
+
+          <!-- ================= PAGE: APPS ================= -->
+          <?!= include('A3_Aplikasi'); ?>
+
+          <!-- ================= PAGE: DASHBOARD ================= -->
+          <?!= include('A4_Dashboard'); ?>
+
+          <!-- ================= PAGE: USERS ================= -->
+          <?!= include('A5_User'); ?>
+
+          <!-- ================= PAGE: ROLES ================= -->
+          <?!= include('A6_Roles'); ?>
+
+          <!-- ================= PAGE: PERMISSIONS ================= -->
+          <?!= include('A7_Katalog'); ?> 
+
+          <!-- ================= PAGE: FILES ================= -->
+          <?!= include('A8_FileStorage'); ?> 
+
+          <!-- ================= PAGE: NOTIFICATIONS ================= -->
+          <?!= include('A9_Notifikasi'); ?>
+
+          <!-- ================= PAGE: AUDIT ================= -->
+          <?!= include('A10_Audit'); ?> 
+
+          <!-- ================= PAGE: SETTINGS ================= -->
+          <?!= include('A11_Pengaturan'); ?>
+
         </div>
-
-        <!-- Profil & Dark Mode Toggle -->
-        <div class="flex items-center gap-2.5">
-          <button @click="toggleDarkMode" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 flex items-center justify-center text-xs transition">
-            <i :class="isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
-          </button>
-
-          <div class="hidden sm:flex flex-col text-right">
-            <span class="text-xs font-bold text-slate-800 dark:text-white leading-tight">{{ currentUser?.nama || 'Pegawai' }}</span>
-            <span class="text-[10px] text-slate-400 font-semibold">{{ currentUser?.role || 'User' }} &bull; {{ currentUser?.nip || '-' }}</span>
-          </div>
-
-          <button @click="logoutPortal" class="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            <span class="hidden sm:inline">Keluar</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Main Content Area -->
-      <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-6">
-
-        <!-- ===== TAB 1: APP LAUNCHER (APLIKASI DINAS) ===== -->
-        <div v-if="currentTab === 'apps'" class="space-y-6">
-          <!-- Banner Sambutan -->
-          <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <i class="fa-solid fa-shapes absolute -right-8 -bottom-10 text-9xl text-white/10 pointer-events-none"></i>
-            <div class="relative z-10">
-              <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Pusat Layanan Aplikasi Terpadu</span>
-              <h2 class="text-2xl font-black mt-1">Selamat Datang di Portal SI-PLATFORM</h2>
-              <p class="text-xs text-emerald-100/90 mt-1 max-w-xl">
-                Akses seluruh aplikasi sistem informasi Pemerintah Kabupaten Trenggalek secara terintegrasi dengan sekali login (Single Sign-On).
-              </p>
-            </div>
-            <div class="relative z-10 flex items-center gap-3">
-              <div class="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
-                <p class="text-[10px] uppercase font-bold text-emerald-200">Total Aplikasi</p>
-                <p class="text-xl font-black text-white">{{ appList.length }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Grid Kartu Aplikasi -->
-          <div>
-            <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <i class="fa-solid fa-cubes text-emerald-600 dark:text-emerald-400"></i>
-              Daftar Aplikasi Dinas
-            </h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              <div v-for="app in appList" :key="app.id"
-                   class="p-5 rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group">
-                <div>
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform">
-                      <i :class="app.icon || 'fa-solid fa-cube'"></i>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60">
-                      {{ app.status || 'AKTIF' }}
-                    </span>
-                  </div>
-
-                  <h4 class="text-base font-extrabold text-slate-900 dark:text-white mt-4">{{ app.nama_app }}</h4>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{{ app.deskripsi || 'Sistem informasi terintegrasi Pemkab Trenggalek.' }}</p>
-                </div>
-
-                <div class="pt-5 mt-5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 font-mono">{{ app.kode_app }}</span>
-                  <button @click="launchApp(app)"
-                          class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
-                    <span>Buka Aplikasi</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===== TAB 2: MASTER DATA SIMPEG ===== -->
-        <div v-if="currentTab === 'master'" class="space-y-6">
-          <div class="p-5 rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
-            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Pusat Data Master SIMPEG</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kelola data kepegawaian, unit kerja OPD, dan formasi jabatan.</p>
-          </div>
-
-          <!-- Master Data Subtabs -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <button @click="masterSubTab = 'pegawai'" :class="masterSubTab === 'pegawai' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
-              Pegawai ({{ pegawaiList.length }})
-            </button>
-            <button @click="masterSubTab = 'unit'" :class="masterSubTab === 'unit' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
-              Unit Kerja ({{ unitList.length }})
-            </button>
-            <button @click="masterSubTab = 'jabatan'" :class="masterSubTab === 'jabatan' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
-              Jabatan ({{ jabatanList.length }})
-            </button>
-          </div>
-
-          <!-- Master Table -->
-          <div class="rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm overflow-hidden p-4">
-            <div class="overflow-x-auto">
-              <table v-if="masterSubTab === 'pegawai'" class="w-full text-left text-xs">
-                <thead>
-                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px] pb-2">
-                    <th class="py-2.5 px-3">No</th>
-                    <th class="py-2.5 px-3">NIP</th>
-                    <th class="py-2.5 px-3">Nama</th>
-                    <th class="py-2.5 px-3">Email</th>
-                    <th class="py-2.5 px-3">Pangkat/Gol</th>
-                    <th class="py-2.5 px-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                  <tr v-for="(p, i) in pegawaiList" :key="p.id" class="hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
-                    <td class="py-2.5 px-3 font-bold">{{ p.nip }}</td>
-                    <td class="py-2.5 px-3 font-semibold">{{ p.nama }}</td>
-                    <td class="py-2.5 px-3 text-slate-500">{{ p.email }}</td>
-                    <td class="py-2.5 px-3">{{ p.pangkat_golongan || '-' }}</td>
-                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">{{ p.status || 'AKTIF' }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <table v-if="masterSubTab === 'unit'" class="w-full text-left text-xs">
-                <thead>
-                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px]">
-                    <th class="py-2.5 px-3">No</th>
-                    <th class="py-2.5 px-3">Kode Unit</th>
-                    <th class="py-2.5 px-3">Nama Unit Kerja</th>
-                    <th class="py-2.5 px-3">Jenis Unit</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                  <tr v-for="(u, i) in unitList" :key="u.id">
-                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
-                    <td class="py-2.5 px-3 font-bold">{{ u.kode_unit }}</td>
-                    <td class="py-2.5 px-3 font-semibold">{{ u.nama_unit }}</td>
-                    <td class="py-2.5 px-3 text-slate-500">{{ u.jenis_unit }}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <table v-if="masterSubTab === 'jabatan'" class="w-full text-left text-xs">
-                <thead>
-                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px]">
-                    <th class="py-2.5 px-3">No</th>
-                    <th class="py-2.5 px-3">Kode</th>
-                    <th class="py-2.5 px-3">Nama Jabatan</th>
-                    <th class="py-2.5 px-3">Jenis</th>
-                    <th class="py-2.5 px-3">Status Formasi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                  <tr v-for="(j, i) in jabatanList" :key="j.id">
-                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
-                    <td class="py-2.5 px-3 font-bold">{{ j.kode_jabatan }}</td>
-                    <td class="py-2.5 px-3 font-semibold">{{ j.nama_jabatan }}</td>
-                    <td class="py-2.5 px-3 text-slate-500">{{ j.jenis_jabatan }}</td>
-                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700">{{ j.status_jabatan || 'DEFINITIF' }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </main>
     </div>
 
+    <!-- ================= MODALS ================= -->
+    <teleport to="body">
+
+      <!-- Confirm Dialog -->
+      <transition name="modal">
+        <div v-if="showConfirm" class="modal-overlay" @click.self="showConfirm=false; confirmAction=null">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden text-center p-6 dark:bg-gray-800 border dark:border-gray-700 transform transition-all scale-100">
+            <div class="w-16 h-16 rounded-full bg-red-50 border-4 border-red-100 text-red-500 flex items-center justify-center mx-auto mb-4 dark:bg-red-900/30 dark:border-red-900/50 dark:text-red-400">
+              <i class="ph ph-warning-octagon text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2 dark:text-white">Konfirmasi Tindakan</h3>
+            <p class="text-sm text-gray-500 mb-6 dark:text-gray-400 leading-relaxed">{{ confirmMessage }}</p>
+            <div class="flex justify-center gap-3">
+              <button @click="showConfirm=false; confirmAction=null" class="btn btn-secondary w-full py-2.5">Batal</button>
+              <button @click="executeConfirm" class="btn btn-danger w-full py-2.5 font-bold">Ya, Lanjutkan</button>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+    </teleport>
+
+    <!-- Toast -->
+    <teleport to="body">
+      <div class="fixed bottom-4 md:bottom-auto md:top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] md:w-full pointer-events-none">
+        <transition-group name="toast">
+          <div v-for="toast in toasts" :key="toast.id" class="pointer-events-auto shadow-xl rounded-xl p-4 flex items-start justify-between border-l-4 bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+               :class="{'border-green-500': toast.type === 'success', 'border-red-500': toast.type === 'error', 'border-amber-500': toast.type === 'warning'}">
+            <div class="flex items-center gap-3">
+              <i :class="{'ph-check-circle text-green-500': toast.type === 'success', 'ph-x-circle text-red-500': toast.type === 'error', 'ph-warning text-amber-500': toast.type === 'warning'}" class="ph text-2xl drop-shadow-sm"></i>
+              <span class="text-sm font-medium leading-tight">{{ toast.message }}</span>
+            </div>
+            <button @click="removeToast(toast.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ml-4"><i class="ph ph-x"></i></button>
+          </div>
+        </transition-group>
+      </div>
+    </teleport>
+    
   </div>
 
+  <!-- ================= VUE 3 APPLICATION SCRIPT ================= -->
   <script>
     const { createApp } = Vue;
-    createApp({
+
+    const app = createApp({
       data() {
+        // Helper untuk parsing JSON dari sessionStorage dengan aman
+        const parseStoredUser = () => {
+          try {
+            const raw = sessionStorage.getItem('platform_user');
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            console.warn('Gagal parse platform_user dari sessionStorage:', e);
+            return null;
+          }
+        };
+
         return {
-          sessionToken: '',
-          currentUser: null,
-          loggingIn: false,
-          isDarkMode: localStorage.getItem('siplatform_dark') === 'true',
-          currentTab: 'apps',
-          masterSubTab: 'pegawai',
-          appList: [],
-          pegawaiList: [],
-          unitList: [],
-          jabatanList: []
+          // PERBAIKAN: Baca dari sessionStorage jika ada, agar tahan dari Refresh (F5)
+          session: {
+            token: sessionStorage.getItem('platform_token') || null,
+            user: parseStoredUser()
+          },
+
+          // Tampilan awal setelah login adalah halaman Aplikasi
+          currentPage: 'apps',
+          redirectParam: '<?!= redirect ?>',
+
+          sidebarCollapsed: window.innerWidth < 768,
+          isMobile: window.innerWidth < 768,
+          isDarkMode: localStorage.getItem('darkMode') === 'true',
+          toasts: [],
+          showConfirm: false,
+          confirmMessage: '',
+          confirmAction: null,
+
+          // Form login manual (username/email + password)
+          loginForm: {
+            identifier: '',
+            password: ''
+          },
+
+          menuItems: [
+            { key: 'apps', label: 'Aplikasi', icon: 'ph ph-grid-four', permission: 'application.read' },            
+            { key: 'dashboard', label: 'Dashboard', icon: 'ph ph-squares-four', permission: 'dashboard.read' },
+            { key: 'users', label: 'Manajemen User', icon: 'ph ph-users', permission: 'user.read' },
+            { key: 'roles', label: 'Hak Akses & Roles', icon: 'ph ph-shield-star', permission: 'role.read' },
+            { key: 'permissions', label: 'Katalog Izin', icon: 'ph ph-key', permission: 'permission.read' },
+            { key: 'files', label: 'File Storage', icon: 'ph ph-folder-notch', permission: 'file.read' },
+            { key: 'notifications', label: 'Notifikasi Sistem', icon: 'ph ph-bell-ringing', permission: 'notification.read' },
+            { key: 'audit', label: 'Audit & Log', icon: 'ph ph-list-magnifying-glass', permission: 'audit.read' },
+            { key: 'settings', label: 'Pengaturan Global', icon: 'ph ph-gear', permission: 'setting.read' }
+          ],
+
+          data: {
+            users: [],
+            roles: [],
+            permissions: [],
+            auditEvents: [],
+            settings: [],
+            files: [],
+            folders: [],
+            notifications: [],
+            notificationTemplates: [],
+            apps: []
+          },
+
+          dashboardStats: {},
+          healthStatus: {},
+
+          statIcons: {
+            totalUsers: 'ph ph-users',
+            totalRoles: 'ph ph-shield',
+            totalPermissions: 'ph ph-key',
+            totalFiles: 'ph ph-folder',
+            totalNotifications: 'ph ph-bell',
+            totalAuditEvents: 'ph ph-list-magnifying-glass'
+          },
+          statColors: {
+            totalUsers: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+            totalRoles: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
+            totalPermissions: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            totalFiles: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
+            totalNotifications: 'bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-400',
+            totalAuditEvents: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+          },
+          statBorderColors: {
+            totalUsers: 'border-blue-500',
+            totalRoles: 'border-purple-500',
+            totalPermissions: 'border-amber-500',
+            totalFiles: 'border-green-500',
+            totalNotifications: 'border-pink-500',
+            totalAuditEvents: 'border-slate-500'
+          },
+          statLabels: {
+            totalUsers: 'Pengguna Aktif',
+            totalRoles: 'Roles Sistem',
+            totalPermissions: 'Izin Akses',
+            totalFiles: 'Dokumen',
+            totalNotifications: 'Notifikasi',
+            totalAuditEvents: 'Log Sistem'
+          },
+          chartInstance: null,
+
+          filters: {
+            users: { search: '', status: '' },
+            files: { folder_id: '' },
+            audit: { search: '', result: '' }
+          },
+          roleSearch: '',
+          permissionSearch: '',
+
+          loading: false,
+          errorMessage: '',
+          loginError: '',
+          loginLoading: false,
+
+          loadedPages: {},
+          isSyncing: false,
+
+          showUserModal: false,
+          userModalMode: 'create',
+          userForm: { username: '', email: '', display_name: '', password: '', status: 'active' },
+          editingUserId: null,
+          savingUser: false,
+
+          showAssignRoles: false,
+          selectedUser: null,
+          availableRoles: [],
+          assignedRoleIds: [],
+          assigningRoles: false,
+
+          showUploadModal: false,
+          uploadData: { file_name: '', mime_type: '', data_base64: '', folder_id: '', file_size: 0 },
+          uploading: false,
+
+          showEditSetting: false,
+          selectedSetting: null,
+          editSettingValue: '',
+          savingSetting: false,
+          showSettingHistory: false,
+          settingHistory: [],
+
+          showSendNotificationModal: false,
+          notificationForm: { template_code: '', subject: '', body: '', recipients: '', channel: 'email' },
+          notificationVariables: {},
+          sendingNotification: false,
+
+          showTemplateModal: false,
+          templateModalMode: 'create',
+          templateForm: { code: '', name: '', channel: 'email', subject: '', body_template: '', variables: '' },
+          editingTemplateId: null,
+          savingTemplate: false,
+
+          showAssignPermissions: false,
+          selectedRole: null,
+          availablePermissions: [],
+          assignedPermissionIds: [],
+          savingPermissions: false,
+
+          showRoleModal: false,
+          roleModalMode: 'create',
+          roleForm: { code: '', name: '', scope: 'global', status: 'active' },
+          editingRoleId: null,
+          savingRole: false,
+
+          selectedUsers: [],
+          selectedFiles: [],
+          sort: { key: '', order: 'asc' },
+          sortFilesKey: '',
+          sortFilesOrder: 'asc',
+          sortAuditKey: '',
+          sortAuditOrder: 'desc',
+          sortRoleKey: '',
+          sortRoleOrder: 'asc',
+
+          _debounceTimer: null,
+          pageSize: 10,
+          currentPages: {
+            users: 1,
+            roles: 1,
+            permissions: 1,
+            audit: 1,
+            settings: 1,
+            files: 1,
+            notifications: 1,
+            templates: 1
+          },
+          fetchId: 0,
+          auditTotalPages: 1,
+          userTotalPages: 1,
+          fileTotalPages: 1,
+          notificationTotalPages: 1,
+          settingTotalPages: 1
         };
       },
+
       computed: {
-        isAdmin() {
-          const r = String((this.currentUser && this.currentUser.role) || '').toLowerCase();
-          return r === 'admin' || r === 'super';
+        currentPageLabel() {
+          const item = this.menuItems.find(m => m.key === this.currentPage);
+          return item ? item.label : '';
+        },
+        currentMenuIcon() {
+          const item = this.menuItems.find(m => m.key === this.currentPage);
+          return item ? item.icon : 'ph ph-file';
+        },
+        allowedMenuItems() {
+          const perms = this.session.user?.permissions;
+          if (!Array.isArray(perms) || perms.length === 0) {
+            return []; // jangan tampilkan menu apa pun
+          }
+          return this.menuItems.filter(item => perms.includes(item.permission));
+        },
+        displayableStats() {
+          const { chartData, recentLogs, chart_data, recent_logs, ...numericStats } = this.dashboardStats || {};
+          return numericStats;
+        },
+        templateVariables() {
+          const tpl = this.data.notificationTemplates.find(t => t.code === this.notificationForm.template_code);
+          if (!tpl || !tpl.variables) return [];
+          return tpl.variables.split(',').map(v => v.trim()).filter(Boolean);
+        },
+        notificationPreview() {
+          let body = this.notificationForm.body;
+          if (!body) return '';
+          this.templateVariables.forEach(v => {
+            const regex = new RegExp('\\{\\{\\s*' + v + '\\s*\\}\\}', 'gi');
+            body = body.replace(regex, this.notificationVariables[v] || '');
+          });
+          return body;
+        },
+        isUserFormValid() {
+          if (this.userModalMode === 'create') {
+            return (this.userForm.username?.length || 0) >= 3 && (this.userForm.email?.includes('@') || false) && (this.userForm.display_name?.length || 0) >= 3;
+          }
+          return (this.userForm.email?.includes('@') || false) && (this.userForm.display_name?.length || 0) >= 3;
+        },
+        isRoleFormValid() {
+          if (this.roleModalMode === 'create') return (this.roleForm.code?.length || 0) >= 2 && (this.roleForm.name?.length || 0) >= 3;
+          return (this.roleForm.name?.length || 0) >= 3;
+        },
+        isTemplateFormValid() {
+          return (this.templateForm.code?.length || 0) >= 2 && (this.templateForm.name?.length || 0) >= 3;
+        },
+        allUsersSelected() {
+          return (this.data.users?.length || 0) > 0 && this.selectedUsers.length === this.data.users.length;
+        },
+        allFilesSelected() {
+          return (this.data.files?.length || 0) > 0 && this.selectedFiles.length === this.data.files.length;
+        },
+        sortedRoles() {
+          const arr = this.data.roles || [];
+          if (!this.sortRoleKey) return arr;
+          const key = this.sortRoleKey;
+          const order = this.sortRoleOrder === 'asc' ? 1 : -1;
+          return [...arr].sort((a, b) => {
+            let va = a[key] || '';
+            let vb = b[key] || '';
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            return va > vb ? order : va < vb ? -order : 0;
+          });
+        },
+        paginatedRoles() {
+          const arr = this.sortedRoles || [];
+          const start = (this.currentPages.roles - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedPermissions() {
+          const arr = this.data.permissions || [];
+          const start = (this.currentPages.permissions - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedTemplates() {
+          const arr = this.data.notificationTemplates || [];
+          const start = (this.currentPages.templates - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedSettings() {
+          return Array.isArray(this.data.settings) ? this.data.settings : [];
+        },
+        paginatedNotifications() {
+          return Array.isArray(this.data.notifications) ? this.data.notifications : [];
+        },
+        totalPages() {
+          const clientPages = (arr) => Math.max(1, Math.ceil((arr?.length || 0) / this.pageSize));
+          return {
+            users: Math.max(1, Number(this.userTotalPages) || 1),
+            files: Math.max(1, Number(this.fileTotalPages) || 1),
+            audit: Math.max(1, Number(this.auditTotalPages) || 1),
+            settings: Math.max(1, Number(this.settingTotalPages) || 1),
+            notifications: Math.max(1, Number(this.notificationTotalPages) || 1),
+            roles: clientPages(this.sortedRoles),
+            permissions: clientPages(this.data.permissions),
+            templates: clientPages(this.data.notificationTemplates)
+          };
         }
       },
+
+      mounted() {
+        document.documentElement.classList.toggle('dark', this.isDarkMode);
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('keydown', this.handleKeydown);
+        this.handleResize();
+
+        // Tangkap parameter redirect yang dikirim dari backend (doGet)
+        if (this.redirectParam) {
+          sessionStorage.setItem('platform_redirect', this.redirectParam);
+        }
+
+        // Jika sesi sudah tersimpan (refresh halaman), langsung arahkan ke halaman yang diminta
+        if (this.session.token && this.session.user) {
+          const redirect = sessionStorage.getItem('platform_redirect');
+          const targetPage = redirect || 'apps';
+          this.switchPage(targetPage);
+          this.fetchData(true); // muat data dengan loading overlay
+          sessionStorage.removeItem('platform_redirect'); // bersihkan setelah dipakai
+        }
+      },
+      
+      beforeUnmount() {
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('keydown', this.handleKeydown);
+        if (this.chartInstance) this.chartInstance.destroy();
+      },
+
       methods: {
+        handleResize() { 
+          this.isMobile = window.innerWidth < 768;
+          if(this.isMobile && this.session.token) {
+             this.sidebarCollapsed = true;
+          } else if (!this.isMobile && this.session.token) {
+             this.sidebarCollapsed = false;
+          }
+        },
+        handleKeydown(e) {
+          if (e.key === 'Escape') {
+            this.showUserModal = false; this.showUploadModal = false; this.showConfirm = false;
+            this.showAssignRoles = false; this.showEditSetting = false; this.showSettingHistory = false;
+            this.showSendNotificationModal = false; this.showAssignPermissions = false;
+            this.showRoleModal = false; this.showTemplateModal = false;
+          }
+        },
         toggleDarkMode() {
           this.isDarkMode = !this.isDarkMode;
-          localStorage.setItem('siplatform_dark', this.isDarkMode);
-          if (this.isDarkMode) document.documentElement.classList.add('dark');
-          else document.documentElement.classList.remove('dark');
+          document.documentElement.classList.toggle('dark', this.isDarkMode);
+          localStorage.setItem('darkMode', this.isDarkMode);
+          this.updateChart();
         },
-        async callServer(action, data = {}) {
-          if (typeof google !== 'undefined' && google.script && google.script.run) {
-            return new Promise((resolve, reject) => {
-              google.script.run
-                .withSuccessHandler(resolve)
-                .withFailureHandler(reject)
-                .handlePlatformAction({ action, data, token: this.sessionToken });
-            });
+        showToast(message, type = 'success') {
+          const id = Date.now() + Math.random();
+          this.toasts.push({ id, message, type });
+          setTimeout(() => this.removeToast(id), 4000);
+        },
+        removeToast(id) { this.toasts = this.toasts.filter(t => t.id !== id); },
+        askConfirm(message, action) {
+          this.confirmMessage = message; this.confirmAction = action; this.showConfirm = true;
+        },
+        async executeConfirm() {
+          const action = this.confirmAction;
+          this.showConfirm = false; this.confirmAction = null;
+          if (action) {
+            try { await action(); } catch (e) { this.showToast(e?.message || e, 'error'); }
           }
-          // Mock fetch untuk mode lokal
-          return { success: true, data: [] };
         },
-        async handlePortalLogin() {
-          this.loggingIn = true;
+        formatDate(value) {
+          if (!value) return '-';
+          const date = new Date(value);
+          return isNaN(date) ? String(value) : date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+        formatBytes(bytes) {
+          const size = Number(bytes);
+          if (!Number.isFinite(size) || size < 0) return '-';
+          if (size === 0) return '0 B';
+          const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+          const i = Math.min(Math.floor(Math.log(size) / Math.log(1024)), sizes.length - 1);
+          return (size / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2) + ' ' + sizes[i];
+        },
+        folderName(folderId) {
+          const folder = this.data.folders.find(f => String(f.id) === String(folderId));
+          return folder ? folder.name : 'Root';
+        },
+        getInitials(text) {
+          const str = String(text || '').trim();
+          return str ? str.substring(0, 2).toUpperCase() : 'US';
+        },
+
+        // =========================================================================
+        // SSO REDIRECT: BUKA APLIKASI DI TAB BARU
+        // =========================================================================
+        async openApp(app) {
+          if (!app.url || app.url.includes('PASTE_APP_URL')) {
+            this.showToast('URL aplikasi belum diatur oleh Administrator', 'warning');
+            return;
+          }
+
+          this.showToast(`Menghubungkan ke ${app.name}...`, 'success');
+
           try {
-            const res = await this.callServer('portal_login', {});
-            if (res && res.success) {
-              this.sessionToken = res.token;
-              this.currentUser = res.user;
-              await this.loadPlatformData();
+            const res = await this.callServer('POST', '/api/v1/auth/create-ticket', {
+              userId: this.session.user.id,
+              appCode: app.code
+            });
+
+            if (res.success && res.data && res.data.ticket) {
+              const targetUrl = app.url + '?ticket=' + encodeURIComponent(res.data.ticket);
+              window.open(targetUrl, '_blank');
             } else {
-              alert((res && res.error) || 'Gagal login.');
+              throw new Error(res.error?.message || 'Gagal membuat tiket keamanan.');
             }
+          } catch (e) {
+            this.showToast(e.message, 'error');
+          }
+        },
+
+        exportCSV(page) {
+          let data = []; let filename = '';
+          if (page === 'users') { data = this.data.users; filename = 'users_export.csv'; }
+          else if (page === 'audit') { data = this.data.auditEvents; filename = 'audit_logs_export.csv'; }
+          else if (page === 'files') { data = this.data.files; filename = 'files_export.csv'; }
+          else if (page === 'roles') { data = this.data.roles; filename = 'roles_export.csv'; }
+          else if (page === 'permissions') { data = this.data.permissions; filename = 'permissions_export.csv'; }
+          else if (page === 'settings') { data = this.data.settings; filename = 'settings_export.csv'; }
+          else if (page === 'notifications') { data = this.data.notifications; filename = 'notifications_export.csv'; }
+
+          if (!data.length) { this.showToast('Tidak ada data untuk diekspor.', 'warning'); return; }
+          const headers = Object.keys(data[0]);
+          const csvRows = [headers.join(',')];
+          data.forEach(row => {
+            const values = headers.map(h => {
+              const val = row[h] ?? '';
+              return `"${String(val).replace(/"/g, '""')}"`;
+            });
+            csvRows.push(values.join(','));
+          });
+          const csvString = csvRows.join('\n');
+          const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        },
+
+        callServer(method, path, data = {}, query = {}, includeToken = true) {
+          return new Promise((resolve, reject) => {
+            // Mekanisme Mock Server (Untuk test di luar GAS)
+            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+              setTimeout(() => {
+                if (path === '/api/v1/auth/login') {
+                  // Mock login: jika identifier/password dikirim, anggap sukses
+                  resolve({ success: true, data: { token: 'dummy_token', user: { email: this.loginForm.identifier || 'admin@si-platform.dev', display_name: 'Administrator', permissions: ['audit.read', 'user.read', 'role.read', 'permission.read', 'file.read', 'notification.read', 'setting.read', 'application.read', 'dashboard.read'] } } });
+                } else if (path === '/api/v1/dashboard/stats') {
+                  resolve({ success: true, data: { totalUsers: 45, totalRoles: 6, totalPermissions: 32, totalFiles: 128, totalNotifications: 54, totalAuditEvents: 1042, chartData: { labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'], datasets: [{ label: 'Aktivitas', data: [12, 19, 15, 25, 22, 30, 28], borderColor: '#10b981', fill: false }] }, recentLogs: [{ id: 101, action: 'LOGIN', resource_type: 'Auth', actor_id: 'admin@si-platform.dev', result: 'SUCCESS', timestamp: new Date().toISOString() }] } });
+                } else if (path === '/api/v1/users') {
+                  resolve({ success: true, data: [{ id: 1, username: 'admin', email: 'admin@si-platform.dev', display_name: 'Administrator', status: 'active', roles: ['admin'] }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/roles') {
+                  resolve({ success: true, data: [{ id: 1, code: 'admin', name: 'Super Administrator', scope: 'global', status: 'active', permissions: ['user.read'] }] });
+                } else if (path === '/api/v1/permissions') {
+                  resolve({ success: true, data: [{ id: 1, resource: 'user', action: 'create', code: 'user.create', description: 'Membuat user' }] });
+                } else if (path === '/api/v1/files') {
+                  resolve({ success: true, data: [{ id: 1, original_name: 'Dokumen.pdf', folder_id: null, size: 2048576, created_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/folders') {
+                  resolve({ success: true, data: [{ id: 10, name: 'Laporan Keuangan' }] });
+                } else if (path === '/api/v1/notifications') {
+                  resolve({ success: true, data: [{ id: 1, subject: 'Welcome', status: 'sent', channel: 'email', created_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/notification-templates') {
+                  resolve({ success: true, data: [{ id: 1, code: 'welcome_user', name: 'Email Welcome', channel: 'email', subject: 'Welcome' }] });
+                } else if (path === '/api/v1/settings') {
+                  resolve({ success: true, data: [{ id: 1, key: 'APP_CONFIG', value_json: '{"theme":"light"}', version: 3, updated_by: 'admin', updated_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/audit/events') {
+                  resolve({ success: true, data: [{ id: 1, action: 'LOGIN', resource_type: 'Auth', actor_id: 'admin', result: 'SUCCESS', timestamp: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else {
+                  resolve({ success: true, data: [] });
+                }
+              }, 400);
+              return;
+            }
+
+            const payload = { ...data };
+            if (includeToken && this.session.token) payload.token = this.session.token;
+
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler((err) => {
+                const message = err?.message || String(err) || 'Unknown error';
+                if (this.session.token && /token|unauthor|auth/i.test(message)) {
+                  this.logout();
+                  this.showToast('Sesi berakhir, silakan login kembali.', 'warning');
+                }
+                reject(new Error(message));
+              })
+              .callApi(method, path, payload, query);
+          });
+        },
+
+        async login() {
+          this.loginLoading = true;
+          this.loginError = '';
+          try {
+            const result = await this.callServer('POST', '/api/v1/auth/login', {}, {}, false);
+            if (result?.success && result.data?.token && result.data?.user) {
+              this.session.token = result.data.token;
+              this.session.user = result.data.user;
+              if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
+              
+              sessionStorage.setItem('platform_token', this.session.token);
+              sessionStorage.setItem('platform_user', JSON.stringify(this.session.user));
+
+              this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
+
+              // ==== REDIRECT SETELAH LOGIN ====
+              const redirect = sessionStorage.getItem('platform_redirect');
+              if (redirect) {
+                this.switchPage(redirect, true);
+                sessionStorage.removeItem('platform_redirect');
+              } else {
+                this.switchPage('apps', true);
+              }
+            } else {
+              this.loginError = result?.error?.message || 'Gagal masuk. Pastikan Anda sudah login dengan akun Google yang terdaftar.';
+            }
+          } catch (e) {
+            this.loginError = 'Terjadi kesalahan: ' + e.message;
           } finally {
-            this.loggingIn = false;
+            this.loginLoading = false;
           }
         },
-        async loadPlatformData() {
-          const [apps, pegs, units, jabs] = await Promise.all([
-            this.callServer('get_app_list'),
-            this.callServer('get_master_pegawai'),
-            this.callServer('get_master_unit'),
-            this.callServer('get_master_jabatan')
-          ]);
-          if (apps && apps.success) this.appList = apps.data || [];
-          if (pegs && pegs.success) this.pegawaiList = pegs.data || [];
-          if (units && units.success) this.unitList = units.data || [];
-          if (jabs && jabs.success) this.jabatanList = jabs.data || [];
-        },
-        async launchApp(app) {
-          const res = await this.callServer('create_ticket', { target_app: app.kode_app });
-          if (res && res.success && res.ticket) {
-            const url = app.url_exec + (app.url_exec.includes('?') ? '&' : '?') + 'ticket=' + encodeURIComponent(res.ticket);
-            window.open(url, '_blank');
-          } else {
-            alert('Gagal menerbitkan tiket SSO: ' + ((res && res.error) || ''));
+
+        // Method untuk login manual (username/email + password)
+        async loginWithPassword() {
+          this.loginLoading = true;
+          this.loginError = '';
+          try {
+            const payload = {
+              identifier: this.loginForm.identifier,
+              password: this.loginForm.password
+            };
+            const result = await this.callServer('POST', '/api/v1/auth/login', payload, {}, false);
+            if (result?.success && result.data?.token && result.data?.user) {
+              this.session.token = result.data.token;
+              this.session.user = result.data.user;
+              if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
+
+              sessionStorage.setItem('platform_token', this.session.token);
+              sessionStorage.setItem('platform_user', JSON.stringify(this.session.user));
+
+              this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
+
+              // ==== REDIRECT SETELAH LOGIN ====
+              const redirect = sessionStorage.getItem('platform_redirect');
+              if (redirect) {
+                this.switchPage(redirect, true);
+                sessionStorage.removeItem('platform_redirect');
+              } else {
+                this.switchPage('apps', true);
+              }
+            } else {
+              this.loginError = result?.error?.message || 'Login gagal. Periksa kembali kredensial Anda.';
+            }
+          } catch (e) {
+            this.loginError = 'Terjadi kesalahan: ' + e.message;
+          } finally {
+            this.loginLoading = false;
           }
         },
-        logoutPortal() {
-          this.callServer('portal_logout');
-          this.sessionToken = '';
-          this.currentUser = null;
+
+        confirmLogout() { this.askConfirm('Apakah Anda yakin ingin keluar dari aplikasi?', () => { this.logout(); }); },
+        
+        async logout() {
+          if (this.session.token) { 
+            try { await this.callServer('POST', '/api/v1/auth/logout'); } catch (e) {} 
+          }
+          this.session.token = null; 
+          this.session.user = null;
+          sessionStorage.removeItem('platform_token');
+          sessionStorage.removeItem('platform_user');
+        },
+
+        switchPage(pageKey, forceReload = false) {
+          this.currentPage = pageKey;
+          if (this.isMobile) this.sidebarCollapsed = true;
+          this.fetchData(forceReload);
+          if (pageKey === 'dashboard') {
+            this.$nextTick(() => { this.updateChart(); });
+          }
+        },
+        toggleSidebar() { this.sidebarCollapsed = !this.sidebarCollapsed; },
+
+        async fetchData(forceReload = false) {
+          const fetchId = ++this.fetchId;
+          const pageKey = this.currentPage;
+          const hasCache = this.loadedPages[pageKey] === true;
+          const showBlockingLoading = forceReload || !hasCache;
+          this.loading = showBlockingLoading;
+          this.isSyncing = !showBlockingLoading;
+          this.errorMessage = '';
+
+          try {
+            switch (this.currentPage) {
+              case 'dashboard': {
+                const [statsRes, appsRes, healthRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/dashboard/stats'),
+                  this.callServer('GET', '/api/v1/apps'),
+                  this.callServer('GET', '/api/v1/health')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (statsRes.success) {
+                    this.dashboardStats = statsRes.data || {};
+                    this.$nextTick(() => { this.updateChart(); });
+                  }
+                  if (appsRes.success) this.data.apps = appsRes.data || [];
+                  if (healthRes.success) this.healthStatus = healthRes.data || {};
+                }
+                break;
+              }
+              case 'apps': {
+                const res = await this.callServer('GET', '/api/v1/apps');
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.apps = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat daftar aplikasi.';
+                }
+                break;
+              }
+              case 'users': {
+                const res = await this.callServer('GET', '/api/v1/users', {}, {
+                  search: this.filters.users.search,
+                  status: this.filters.users.status,
+                  page: this.currentPages.users,
+                  pageSize: this.pageSize,
+                  sortBy: this.sort.key,
+                  sortOrder: this.sort.order
+                });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.users = res.data || []; this.userTotalPages = res.meta?.totalPages || 1; this.selectedUsers = []; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat pengguna.';
+                }
+                break;
+              }
+              case 'roles': {
+                const res = await this.callServer('GET', '/api/v1/roles', {}, { search: this.roleSearch });
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.roles = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat roles.';
+                }
+                break;
+              }
+              case 'permissions': {
+                const res = await this.callServer('GET', '/api/v1/permissions', {}, { search: this.permissionSearch });
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.permissions = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat permissions.';
+                }
+                break;
+              }
+              case 'audit': {
+                const res = await this.callServer('GET', '/api/v1/audit/events', {}, {
+                  page: this.currentPages.audit,
+                  pageSize: this.pageSize,
+                  search: this.filters.audit.search,
+                  result: this.filters.audit.result,
+                  sortBy: this.sortAuditKey,
+                  sortOrder: this.sortAuditOrder
+                });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.auditEvents = res.data || []; this.auditTotalPages = res.meta?.totalPages || 1; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat log audit.';
+                }
+                break;
+              }
+              case 'settings': {
+                const res = await this.callServer('GET', '/api/v1/settings', {}, { page: this.currentPages.settings, pageSize: this.pageSize });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.settings = res.data || []; this.settingTotalPages = res.meta?.totalPages || 1; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat pengaturan.';
+                }
+                break;
+              }
+              case 'files': {
+                const [fRes, dRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/files', {}, {
+                    folder_id: this.filters.files.folder_id,
+                    page: this.currentPages.files,
+                    pageSize: this.pageSize,
+                    sortBy: this.sortFilesKey,
+                    sortOrder: this.sortFilesOrder
+                  }),
+                  this.callServer('GET', '/api/v1/folders')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (fRes.success) { this.data.files = fRes.data || []; this.fileTotalPages = fRes.meta?.totalPages || 1; } 
+                  else this.errorMessage = fRes.error?.message || 'Gagal memuat berkas.';
+                  if (dRes.success) this.data.folders = dRes.data || [];
+                }
+                break;
+              }
+              case 'notifications': {
+                const [nRes, tRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/notifications', {}, { page: this.currentPages.notifications, pageSize: this.pageSize }),
+                  this.callServer('GET', '/api/v1/notification-templates')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (nRes.success) { this.data.notifications = nRes.data || []; this.notificationTotalPages = nRes.meta?.totalPages || 1; } 
+                  else this.errorMessage = nRes.error?.message || 'Gagal memuat notifikasi.';
+                  if (tRes.success) this.data.notificationTemplates = tRes.data || [];
+                }
+                break;
+              }
+            }
+
+            if (fetchId === this.fetchId && !this.errorMessage) {
+              this.loadedPages[pageKey] = true;
+            }
+
+          } catch (e) {
+            if (fetchId === this.fetchId) this.errorMessage = 'Terjadi galat sistem: ' + e.message;
+          } finally {
+            if (fetchId === this.fetchId) {
+              this.loading = false;
+              this.isSyncing = false;
+            }
+          }
+        },
+
+        debouncedFetch() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.currentPages.users = 1; this.fetchData(); }, 500); },
+        debouncedFetchAudit() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.currentPages.audit = 1; this.fetchData(); }, 500); },
+        debouncedFetchRoles() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.fetchData(); }, 500); },
+        debouncedFetchPermissions() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.fetchData(); }, 500); },
+
+        sortBy(key) { if (this.sort.key === key) this.sort.order = this.sort.order === 'asc' ? 'desc' : 'asc'; else { this.sort.key = key; this.sort.order = 'asc'; } this.currentPages.users = 1; this.fetchData(); },
+        sortFiles(key) { if (this.sortFilesKey === key) this.sortFilesOrder = this.sortFilesOrder === 'asc' ? 'desc' : 'asc'; else { this.sortFilesKey = key; this.sortFilesOrder = 'asc'; } this.currentPages.files = 1; this.fetchData(); },
+        sortAudit(key) { if (this.sortAuditKey === key) this.sortAuditOrder = this.sortAuditOrder === 'asc' ? 'desc' : 'asc'; else { this.sortAuditKey = key; this.sortAuditOrder = 'desc'; } this.currentPages.audit = 1; this.fetchData(); },
+        sortByRole(key) { if (this.sortRoleKey === key) this.sortRoleOrder = this.sortRoleOrder === 'asc' ? 'desc' : 'asc'; else { this.sortRoleKey = key; this.sortRoleOrder = 'asc'; } },
+
+        nextPage(cat) {
+          const serverSideTotals = { users: this.userTotalPages, files: this.fileTotalPages, audit: this.auditTotalPages, settings: this.settingTotalPages, notifications: this.notificationTotalPages };
+          if (Object.prototype.hasOwnProperty.call(serverSideTotals, cat)) {
+            const total = Math.max(1, Number(serverSideTotals[cat]) || 1);
+            if (this.currentPages[cat] < total) { this.currentPages[cat]++; this.fetchData(); }
+            return;
+          }
+          if (this.currentPages[cat] < (this.totalPages[cat] || 1)) { this.currentPages[cat]++; }
+        },
+        prevPage(cat) {
+          const serverSideTotals = { users: this.userTotalPages, files: this.fileTotalPages, audit: this.auditTotalPages, settings: this.settingTotalPages, notifications: this.notificationTotalPages };
+          if (Object.prototype.hasOwnProperty.call(serverSideTotals, cat)) {
+            if (this.currentPages[cat] > 1) { this.currentPages[cat]--; this.fetchData(); }
+            return;
+          }
+          if (this.currentPages[cat] > 1) { this.currentPages[cat]--; }
+        },
+
+        // --- CRUD OPERATIONS ---
+        openCreateUserModal() {
+          this.userModalMode = 'create';
+          this.userForm = { username: '', email: '', display_name: '', password: '', status: 'active' };
+          this.editingUserId = null;
+          this.showUserModal = true;
+        },
+
+        openEditUserModal(user) {
+          this.userModalMode = 'edit';
+          this.userForm = {
+            username: user.username,
+            email: user.email,
+            display_name: user.display_name,
+            status: user.status || 'active',
+            password: '' // tidak dipakai saat edit
+          };
+          this.editingUserId = user.id;
+          this.showUserModal = true;
+        },
+
+        closeUserModal() { this.showUserModal = false; this.savingUser = false; },
+        async saveUser() {
+          this.savingUser = true;
+          try {
+            const method = this.userModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.userModalMode === 'create' ? '/api/v1/users' : `/api/v1/users/${this.editingUserId}`;
+            const result = await this.callServer(method, path, this.userForm);
+            if (result.success) { this.showToast('Data pengguna berhasil disimpan!'); this.closeUserModal(); this.loadedPages['users'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingUser = false; }
+        },
+        deleteUser(id) {
+          this.askConfirm('Nonaktifkan pengguna ini secara permanen?', async () => {
+            const result = await this.callServer('DELETE', `/api/v1/users/${id}`);
+            if (result.success) { this.showToast('Pengguna telah dinonaktifkan'); this.loadedPages['users'] = false; this.fetchData(true); } else throw new Error(result.error?.message || 'Gagal');
+          });
+        },
+        toggleAllUsers(e) { this.selectedUsers = e.target.checked ? this.data.users.map(u => u.id) : []; },
+        bulkDeleteUsers() {
+          if (!this.selectedUsers.length) return;
+          this.askConfirm(`Nonaktifkan ${this.selectedUsers.length} pengguna terpilih?`, async () => {
+            for (const id of this.selectedUsers) await this.callServer('DELETE', `/api/v1/users/${id}`);
+            this.showToast('Pengguna terpilih berhasil dinonaktifkan'); this.selectedUsers = []; this.loadedPages['users'] = false; this.fetchData(true);
+          });
+        },
+        async openAssignRoles(user) {
+          this.selectedUser = user; this.showAssignRoles = true; this.assigningRoles = false;
+          try {
+            const res = await this.callServer('GET', '/api/v1/roles');
+            if (res.success) {
+              this.availableRoles = res.data || [];
+              const userRoleCodes = Array.isArray(user.roles) ? user.roles : [];
+              this.assignedRoleIds = this.availableRoles.filter(r => userRoleCodes.includes(r.code)).map(r => r.id);
+            } else throw new Error(res.error?.message || 'Gagal memuat data roles');
+          } catch (e) { this.showToast(e.message, 'error'); this.showAssignRoles = false; }
+        },
+        async saveAssignRoles() {
+          this.assigningRoles = true;
+          try {
+            const res = await this.callServer('POST', `/api/v1/users/${this.selectedUser.id}/roles`, { role_ids: this.assignedRoleIds });
+            if (res.success) { this.showAssignRoles = false; this.showToast('Perubahan role diterapkan'); this.loadedPages['users'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal menerapkan role');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.assigningRoles = false; }
+        },
+
+        openCreateRoleModal() { this.roleModalMode = 'create'; this.roleForm = { code: '', name: '', scope: 'global', status: 'active' }; this.editingRoleId = null; this.showRoleModal = true; },
+        openEditRoleModal(role) { this.roleModalMode = 'edit'; this.roleForm = { code: role.code, name: role.name, scope: role.scope, status: role.status }; this.editingRoleId = role.id; this.showRoleModal = true; },
+        closeRoleModal() { this.showRoleModal = false; this.savingRole = false; },
+        async saveRole() {
+          this.savingRole = true;
+          try {
+            const method = this.roleModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.roleModalMode === 'create' ? '/api/v1/roles' : `/api/v1/roles/${this.editingRoleId}`;
+            const payload = this.roleModalMode === 'create' ? { code: this.roleForm.code, name: this.roleForm.name, scope: this.roleForm.scope } : { name: this.roleForm.name, scope: this.roleForm.scope, status: this.roleForm.status };
+            const result = await this.callServer(method, path, payload);
+            if (result.success) { this.showToast('Role berhasil disimpan!'); this.closeRoleModal(); this.loadedPages['roles'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingRole = false; }
+        },
+        async openAssignPermissions(role) {
+          this.selectedRole = role; this.showAssignPermissions = true; this.savingPermissions = false;
+          try {
+            const res = await this.callServer('GET', '/api/v1/permissions');
+            if (res.success) {
+              this.availablePermissions = res.data || [];
+              if (role) {
+                const rolePerms = role.permissions || [];
+                this.assignedPermissionIds = this.availablePermissions.filter(p => rolePerms.includes(p.code)).map(p => p.id);
+              } else this.assignedPermissionIds = [];
+            } else throw new Error(res.error?.message || 'Gagal memuat daftar izin');
+          } catch (e) { this.showToast(e.message, 'error'); this.showAssignPermissions = false; }
+        },
+        async saveAssignPermissions() {
+          if (!this.selectedRole) return;
+          this.savingPermissions = true;
+          try {
+            const res = await this.callServer('POST', `/api/v1/roles/${this.selectedRole.id}/permissions`, { permission_ids: this.assignedPermissionIds });
+            if (res.success) { this.showAssignPermissions = false; this.showToast('Izin akses berhasil diperbarui'); this.loadedPages['roles'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingPermissions = false; }
+        },
+
+        openUploadModal() { this.showUploadModal = true; this.uploadData = { file_name: '', mime_type: '', data_base64: '', folder_id: '', file_size: 0 }; this.$nextTick(() => { if (this.$refs.fileInput) this.$refs.fileInput.value = ''; }); },
+        onFileSelected(e) { const file = e.target.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { this.showToast('Ukuran file tidak boleh lebih dari 10MB!', 'error'); e.target.value = ''; return; } this.processFile(file); },
+        handleDrop(e) { const file = e.dataTransfer.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { this.showToast('Ukuran file tidak boleh lebih dari 10MB!', 'error'); return; } this.processFile(file); },
+        processFile(file) {
+          this.uploadData.file_size = file.size;
+          const reader = new FileReader();
+          reader.onload = (e) => { this.uploadData.file_name = file.name; this.uploadData.mime_type = file.type || 'application/octet-stream'; this.uploadData.data_base64 = e.target.result.split(',')[1]; };
+          reader.onerror = () => this.showToast('Gagal membaca file dari sistem', 'error');
+          reader.readAsDataURL(file);
+        },
+        async uploadFile() {
+          this.uploading = true;
+          try {
+            const res = await this.callServer('POST', '/api/v1/files', this.uploadData);
+            if (res.success) { this.showUploadModal = false; this.showToast('File berhasil diunggah'); this.loadedPages['files'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Upload dibatalkan karena kesalahan sistem');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.uploading = false; }
+        },
+        async downloadFile(fileId) {
+          try {
+            const res = await this.callServer('GET', `/api/v1/files/${fileId}/download`);
+            if (res.success && res.data?.data_base64) {
+              const byteCharacters = atob(res.data.data_base64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: res.data.mime_type || 'application/octet-stream' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = res.data.file_name || 'download';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              this.showToast('File berhasil diunduh', 'success');
+            } else {
+              throw new Error('Data file tidak tersedia');
+            }
+          } catch (e) { this.showToast(e.message, 'error'); }
+        },
+        deleteFile(fileId) {
+          this.askConfirm('Hapus file ini permanen?', async () => {
+            const res = await this.callServer('DELETE', `/api/v1/files/${fileId}`);
+            if (res.success) { this.showToast('File dihapus'); this.loadedPages['files'] = false; this.fetchData(true); } else throw new Error(res.error?.message || 'Gagal hapus');
+          });
+        },
+        toggleAllFiles(e) { this.selectedFiles = e.target.checked ? this.data.files.map(f => f.id) : []; },
+        bulkDeleteFiles() {
+          if (!this.selectedFiles.length) return;
+          this.askConfirm(`Hapus permanen ${this.selectedFiles.length} file terpilih?`, async () => {
+            for (const id of this.selectedFiles) await this.callServer('DELETE', `/api/v1/files/${id}`);
+            this.showToast('Proses hapus massal selesai'); this.selectedFiles = []; this.loadedPages['files'] = false; this.fetchData(true);
+          });
+        },
+
+        openEditSetting(setting) {
+          this.selectedSetting = setting;
+          try {
+            const value = typeof setting.value_json === 'string' ? JSON.parse(setting.value_json) : setting.value_json;
+            this.editSettingValue = JSON.stringify(value ?? null, null, 2);
+          } catch (_) { this.editSettingValue = String(setting.value_json ?? ''); }
+          this.showEditSetting = true;
+        },
+        async saveSetting() {
+          this.savingSetting = true;
+          try {
+            const parsed = JSON.parse(this.editSettingValue);
+            const res = await this.callServer('PATCH', `/api/v1/settings/${this.selectedSetting.key}`, { value: parsed });
+            if (res.success) { this.showEditSetting = false; this.showToast('Konfigurasi sistem berhasil diperbarui'); this.loadedPages['settings'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal');
+          } catch (e) { this.showToast(e.message + ' (Pastikan format JSON valid)', 'error'); } finally { this.savingSetting = false; }
+        },
+        async openSettingHistory(key) {
+          try {
+            const res = await this.callServer('GET', `/api/v1/settings/${key}/history`);
+            if (res.success) { this.selectedSetting = res.data.setting; this.settingHistory = res.data.versions || []; this.showSettingHistory = true; } 
+            else throw new Error(res.error?.message || 'Gagal mengambil riwayat');
+          } catch (e) { this.showToast(e.message, 'error'); }
+        },
+
+        openSendNotificationModal() { this.showSendNotificationModal = true; this.notificationForm = { template_code: '', subject: '', body: '', recipients: '', channel: 'email' }; this.notificationVariables = {}; this.sendingNotification = false; },
+        onTemplateChange() {
+          this.notificationVariables = {};
+          const tpl = this.data.notificationTemplates.find(t => t.code === this.notificationForm.template_code);
+          if (tpl) {
+            this.notificationForm.subject = tpl.subject || this.notificationForm.subject;
+            this.notificationForm.body = tpl.body_template || this.notificationForm.body;
+          }
+        },
+        async sendNotification() {
+          const recipients = this.notificationForm.recipients.split(',').map(s => s.trim()).filter(s => s);
+          if (!recipients.length) { this.showToast('Penerima (Recipients) wajib diisi', 'warning'); return; }
+          this.sendingNotification = true;
+          try {
+            const payload = {
+              template_code: this.notificationForm.template_code || undefined,
+              subject: this.notificationForm.subject,
+              body: this.notificationForm.body,
+              channel: this.notificationForm.channel,
+              recipients: recipients.map(r => ({ type: this.notificationForm.channel, value: r })),
+              variables: this.notificationVariables
+            };
+            const res = await this.callServer('POST', '/api/v1/notifications', payload);
+            if (res.success) { this.showSendNotificationModal = false; this.showToast('Notifikasi berhasil dimasukkan ke antrean kirim'); this.loadedPages['notifications'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal mengirim pesan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.sendingNotification = false; }
+        },
+        openCreateTemplateModal() { this.templateModalMode = 'create'; this.templateForm = { code: '', name: '', channel: 'email', subject: '', body_template: '', variables: '' }; this.editingTemplateId = null; this.showTemplateModal = true; },
+        openEditTemplateModal(tpl) { this.templateModalMode = 'edit'; this.templateForm = { code: tpl.code, name: tpl.name, channel: tpl.channel, subject: tpl.subject || '', body_template: tpl.body_template || '', variables: tpl.variables || '' }; this.editingTemplateId = tpl.id; this.showTemplateModal = true; },
+        closeTemplateModal() { this.showTemplateModal = false; this.savingTemplate = false; },
+        async saveTemplate() {
+          this.savingTemplate = true;
+          try {
+            const method = this.templateModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.templateModalMode === 'create' ? '/api/v1/notification-templates' : `/api/v1/notification-templates/${this.editingTemplateId}`;
+            const result = await this.callServer(method, path, this.templateForm);
+            if (result.success) { this.showToast('Template berhasil disimpan!'); this.closeTemplateModal(); this.loadedPages['notifications'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan template');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingTemplate = false; }
+        },
+
+        updateChart() {
+          if (this.currentPage !== 'dashboard') return;
+          const canvas = document.getElementById('dashboardChart');
+          if (!canvas) return;
+          if (this.chartInstance) { this.chartInstance.destroy(); }
+          const fallbackData = {
+            labels: ['Belum Ada Data'],
+            datasets: [{ label: 'Menunggu Server...', data: [0], borderColor: '#cbd5e1', fill: false }]
+          };
+          const chartData = this.dashboardStats.chartData || this.dashboardStats.chart_data || fallbackData;
+          this.chartInstance = new Chart(canvas, {
+            type: 'line',
+            data: chartData,
+            options: { 
+              responsive: true, 
+              maintainAspectRatio: false,
+              interaction: { mode: 'index', intersect: false },
+              plugins: { legend: { position: 'bottom', labels: { color: this.isDarkMode ? '#e2e8f0' : '#475569' } } },
+              scales: {
+                y: { beginAtZero: true, grid: { borderDash: [4, 4], color: this.isDarkMode ? '#334155' : '#e2e8f0' }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } }
+              }
+            }
+          });
         }
-      },
-      mounted() {
-        if (this.isDarkMode) document.documentElement.classList.add('dark');
-        // Auto-check active session
-        this.handlePortalLogin();
       }
-    }).mount('#app');
+    });
+
+    app.component('pagination-controls', {
+      props: {
+        category: String,
+        currentPage: Number,
+        totalPages: Number
+      },
+      emits: ['prev', 'next'],
+      template: `
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
+          <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Halaman <span class="text-gray-900 dark:text-white">{{ currentPage }}</span> dari <span class="text-gray-900 dark:text-white">{{ totalPages }}</span>
+          </span>
+          <div class="flex gap-2">
+            <button @click="$emit('prev')" :disabled="currentPage === 1" class="btn btn-secondary py-1.5 px-3 text-sm flex items-center gap-1 shadow-sm">
+              <i class="ph ph-caret-left"></i> Prev
+            </button>
+            <button @click="$emit('next')" :disabled="currentPage >= totalPages" class="btn btn-secondary py-1.5 px-3 text-sm flex items-center gap-1 shadow-sm">
+              Next <i class="ph ph-caret-right"></i>
+            </button>
+          </div>
+        </div>
+      `
+    });
+
+    app.mount('#app');
   </script>
 </body>
 </html>
