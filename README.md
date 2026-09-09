@@ -11,7 +11,7 @@ Aplikasi web portal utama berbasis **Google Apps Script (GAS)**, **Vue 3**, dan 
 |---|---|---|
 | **App Code** | `SIPLATFORM` | Kode identitas aplikasi portal utama |
 | **Backend Architecture** | `Global v2.0` | High-performance Caching & Transactional Lock Engine |
-| **Frontend CDN** | `frontend-cdn@v2.2.5` | Shared UI Tokens & Design Components |
+| **Frontend CDN** | `frontend-cdn@v2.3.0` | Shared UI Tokens & Design Components |
 | **Runtime** | `V8` | Modern JavaScript Engine |
 | **TimeZone** | `Asia/Jakarta` | WIB (Waktu Indonesia Barat) |
 
