@@ -1,0 +1,27 @@
+<!-- ==================== A3_Aplikasi.html — Portal Aplikasi View ==================== -->
+<div v-if="currentPage === 'apps' && !loading" class="space-y-6">
+  <div v-if="data.apps.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div v-for="app in data.apps" :key="app.code" class="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center dark:bg-gray-700 dark:text-brand-400">
+          <i :class="app.icon" class="text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">{{ app.name }}</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ app.code }}</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-300 flex-1">{{ app.description }}</p>
+      <button 
+        @click="openApp(app)" 
+        class="btn btn-primary w-full"
+        :disabled="!app.url || app.url.includes('PASTE_APP_URL')">
+        <i class="ph ph-arrow-square-out"></i> Buka Aplikasi
+      </button>
+    </div>
+  </div>
+  <div v-else class="empty-state">
+    <i class="ph ph-grid-four text-4xl mb-2 text-gray-400"></i>
+    <p>Tidak ada aplikasi terdaftar.</p>
+  </div>
+</div>
