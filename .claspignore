@@ -1,0 +1,11 @@
+# Abaikan berkas selain Apps Script di folder src/
+**/**
+!src/**
+!appsscript.json
+.git/**
+node_modules/**
+package.json
+package-lock.json
+README.md
+*.md
+.github/**
