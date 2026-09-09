@@ -1,0 +1,27 @@
+{
+  "name": "@miftachurrochim82/si-platform",
+  "version": "1.0.0",
+  "description": "Portal SSO & Pusat Data Master SIMPEG (Pemerintah Kabupaten Trenggalek)",
+  "scripts": {
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "deploy": "clasp deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miftachurrochim82-sketch/si-platform.git"
+  },
+  "keywords": [
+    "google-apps-script",
+    "sso",
+    "portal",
+    "simpeg",
+    "trenggalek",
+    "si-platform"
+  ],
+  "author": "miftachurrochim82-sketch",
+  "license": "MIT",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}

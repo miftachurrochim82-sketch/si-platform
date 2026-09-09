@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SI-PLATFORM — Portal SSO & Master Data Pemkab Trenggalek</title>
+
+  <!-- Dark Mode Pre-paint Script (Anti-Flicker) -->
+  <script>
+    try {
+      if (localStorage.getItem('siplatform_dark') === 'true') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch(e) {}
+  </script>
+
+  <!-- CDN Dependencies -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- 1. FRONTEND CDN SHARED CSS (v2.2.5) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.2.5/frontend/app-common.min.css">
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-['Inter'] antialiased">
+  <div id="app" v-cloak>
+
+    <!-- ===== 1. LAYAR LOGIN PORTAL SSO ===== -->
+    <div v-if="!sessionToken" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900">
+      <div class="w-full max-w-md p-8 rounded-3xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl text-center space-y-6">
+        <!-- Brand Logo SVG -->
+        <div class="flex justify-center">
+          <div class="w-20 h-24 flex items-center justify-center drop-shadow-lg">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' width='80' height='96'>
+              <path d='M50 5 L90 25 V65 C90 90 50 115 50 115 C50 115 10 90 10 65 V25 Z' fill='#1e3a8a' stroke='#f59e0b' stroke-width='4'/>
+              <path d='M50 15 L80 32 V62 C80 82 50 102 50 102 C50 102 20 82 20 62 V32 Z' fill='#047857'/>
+              <circle cx='50' cy='55' r='18' fill='#fbbf24'/>
+              <path d='M50 40 L54 50 L64 50 L56 56 L59 66 L50 60 L41 66 L44 56 L36 50 L46 50 Z' fill='#dc2626'/>
+              <text x='50' y='93' font-family='Arial, sans-serif' font-size='9' font-weight='bold' fill='#ffffff' text-anchor='middle'>TRENGGALEK</text>
+            </svg>
+          </div>
+        </div>
+
+        <div>
+          <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SI-PLATFORM</h1>
+          <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">Portal SSO & Pusat Data SIMPEG</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Pemerintah Kabupaten Trenggalek</p>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-700">
+          <button @click="handlePortalLogin" :disabled="loggingIn"
+                  class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+            <i v-if="loggingIn" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-right-to-bracket"></i>
+            <span>{{ loggingIn ? 'Memverifikasi Akun...' : 'Masuk dengan Akun Google / ASN' }}</span>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-slate-400 dark:text-slate-500">
+          Satu akun untuk seluruh aplikasi web dinas di Pemkab Trenggalek.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== 2. SHELL UTAMA PORTAL ===== -->
+    <div v-else class="min-h-screen flex flex-col">
+      <!-- Header Bar Portal -->
+      <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-sm shadow-md">
+            P
+          </div>
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-900 dark:text-white leading-none">SI-PLATFORM</h2>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Pemkab Trenggalek</p>
+          </div>
+        </div>
+
+        <!-- Tab Navigasi Menu Header -->
+        <div class="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-2xl">
+          <button @click="currentTab = 'apps'" :class="currentTab === 'apps' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
+            <i class="fa-solid fa-shapes"></i> <span>Aplikasi</span>
+          </button>
+          <button @click="currentTab = 'master'" :class="currentTab === 'master' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
+            <i class="fa-solid fa-database"></i> <span>Master Data SIMPEG</span>
+          </button>
+          <button v-if="isAdmin" @click="currentTab = 'registry'" :class="currentTab === 'registry' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'" class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i> <span>Kelola Aplikasi</span>
+          </button>
+        </div>
+
+        <!-- Profil & Dark Mode Toggle -->
+        <div class="flex items-center gap-2.5">
+          <button @click="toggleDarkMode" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 flex items-center justify-center text-xs transition">
+            <i :class="isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+          </button>
+
+          <div class="hidden sm:flex flex-col text-right">
+            <span class="text-xs font-bold text-slate-800 dark:text-white leading-tight">{{ currentUser?.nama || 'Pegawai' }}</span>
+            <span class="text-[10px] text-slate-400 font-semibold">{{ currentUser?.role || 'User' }} &bull; {{ currentUser?.nip || '-' }}</span>
+          </div>
+
+          <button @click="logoutPortal" class="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="hidden sm:inline">Keluar</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-6">
+
+        <!-- ===== TAB 1: APP LAUNCHER (APLIKASI DINAS) ===== -->
+        <div v-if="currentTab === 'apps'" class="space-y-6">
+          <!-- Banner Sambutan -->
+          <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <i class="fa-solid fa-shapes absolute -right-8 -bottom-10 text-9xl text-white/10 pointer-events-none"></i>
+            <div class="relative z-10">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Pusat Layanan Aplikasi Terpadu</span>
+              <h2 class="text-2xl font-black mt-1">Selamat Datang di Portal SI-PLATFORM</h2>
+              <p class="text-xs text-emerald-100/90 mt-1 max-w-xl">
+                Akses seluruh aplikasi sistem informasi Pemerintah Kabupaten Trenggalek secara terintegrasi dengan sekali login (Single Sign-On).
+              </p>
+            </div>
+            <div class="relative z-10 flex items-center gap-3">
+              <div class="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
+                <p class="text-[10px] uppercase font-bold text-emerald-200">Total Aplikasi</p>
+                <p class="text-xl font-black text-white">{{ appList.length }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid Kartu Aplikasi -->
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-cubes text-emerald-600 dark:text-emerald-400"></i>
+              Daftar Aplikasi Dinas
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div v-for="app in appList" :key="app.id"
+                   class="p-5 rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group">
+                <div>
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform">
+                      <i :class="app.icon || 'fa-solid fa-cube'"></i>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60">
+                      {{ app.status || 'AKTIF' }}
+                    </span>
+                  </div>
+
+                  <h4 class="text-base font-extrabold text-slate-900 dark:text-white mt-4">{{ app.nama_app }}</h4>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{{ app.deskripsi || 'Sistem informasi terintegrasi Pemkab Trenggalek.' }}</p>
+                </div>
+
+                <div class="pt-5 mt-5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-slate-400 font-mono">{{ app.kode_app }}</span>
+                  <button @click="launchApp(app)"
+                          class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                    <span>Buka Aplikasi</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB 2: MASTER DATA SIMPEG ===== -->
+        <div v-if="currentTab === 'master'" class="space-y-6">
+          <div class="p-5 rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Pusat Data Master SIMPEG</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kelola data kepegawaian, unit kerja OPD, dan formasi jabatan.</p>
+          </div>
+
+          <!-- Master Data Subtabs -->
+          <div class="flex items-center gap-2 overflow-x-auto pb-1">
+            <button @click="masterSubTab = 'pegawai'" :class="masterSubTab === 'pegawai' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
+              Pegawai ({{ pegawaiList.length }})
+            </button>
+            <button @click="masterSubTab = 'unit'" :class="masterSubTab === 'unit' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
+              Unit Kerja ({{ unitList.length }})
+            </button>
+            <button @click="masterSubTab = 'jabatan'" :class="masterSubTab === 'jabatan' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'" class="px-4 py-2 rounded-2xl text-xs font-bold border transition">
+              Jabatan ({{ jabatanList.length }})
+            </button>
+          </div>
+
+          <!-- Master Table -->
+          <div class="rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 shadow-sm overflow-hidden p-4">
+            <div class="overflow-x-auto">
+              <table v-if="masterSubTab === 'pegawai'" class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px] pb-2">
+                    <th class="py-2.5 px-3">No</th>
+                    <th class="py-2.5 px-3">NIP</th>
+                    <th class="py-2.5 px-3">Nama</th>
+                    <th class="py-2.5 px-3">Email</th>
+                    <th class="py-2.5 px-3">Pangkat/Gol</th>
+                    <th class="py-2.5 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                  <tr v-for="(p, i) in pegawaiList" :key="p.id" class="hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
+                    <td class="py-2.5 px-3 font-bold">{{ p.nip }}</td>
+                    <td class="py-2.5 px-3 font-semibold">{{ p.nama }}</td>
+                    <td class="py-2.5 px-3 text-slate-500">{{ p.email }}</td>
+                    <td class="py-2.5 px-3">{{ p.pangkat_golongan || '-' }}</td>
+                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">{{ p.status || 'AKTIF' }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table v-if="masterSubTab === 'unit'" class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px]">
+                    <th class="py-2.5 px-3">No</th>
+                    <th class="py-2.5 px-3">Kode Unit</th>
+                    <th class="py-2.5 px-3">Nama Unit Kerja</th>
+                    <th class="py-2.5 px-3">Jenis Unit</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                  <tr v-for="(u, i) in unitList" :key="u.id">
+                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
+                    <td class="py-2.5 px-3 font-bold">{{ u.kode_unit }}</td>
+                    <td class="py-2.5 px-3 font-semibold">{{ u.nama_unit }}</td>
+                    <td class="py-2.5 px-3 text-slate-500">{{ u.jenis_unit }}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table v-if="masterSubTab === 'jabatan'" class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b font-extrabold text-slate-400 uppercase text-[10px]">
+                    <th class="py-2.5 px-3">No</th>
+                    <th class="py-2.5 px-3">Kode</th>
+                    <th class="py-2.5 px-3">Nama Jabatan</th>
+                    <th class="py-2.5 px-3">Jenis</th>
+                    <th class="py-2.5 px-3">Status Formasi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                  <tr v-for="(j, i) in jabatanList" :key="j.id">
+                    <td class="py-2.5 px-3 text-slate-400">{{ i + 1 }}</td>
+                    <td class="py-2.5 px-3 font-bold">{{ j.kode_jabatan }}</td>
+                    <td class="py-2.5 px-3 font-semibold">{{ j.nama_jabatan }}</td>
+                    <td class="py-2.5 px-3 text-slate-500">{{ j.jenis_jabatan }}</td>
+                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700">{{ j.status_jabatan || 'DEFINITIF' }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          sessionToken: '',
+          currentUser: null,
+          loggingIn: false,
+          isDarkMode: localStorage.getItem('siplatform_dark') === 'true',
+          currentTab: 'apps',
+          masterSubTab: 'pegawai',
+          appList: [],
+          pegawaiList: [],
+          unitList: [],
+          jabatanList: []
+        };
+      },
+      computed: {
+        isAdmin() {
+          const r = String((this.currentUser && this.currentUser.role) || '').toLowerCase();
+          return r === 'admin' || r === 'super';
+        }
+      },
+      methods: {
+        toggleDarkMode() {
+          this.isDarkMode = !this.isDarkMode;
+          localStorage.setItem('siplatform_dark', this.isDarkMode);
+          if (this.isDarkMode) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        },
+        async callServer(action, data = {}) {
+          if (typeof google !== 'undefined' && google.script && google.script.run) {
+            return new Promise((resolve, reject) => {
+              google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .handlePlatformAction({ action, data, token: this.sessionToken });
+            });
+          }
+          // Mock fetch untuk mode lokal
+          return { success: true, data: [] };
+        },
+        async handlePortalLogin() {
+          this.loggingIn = true;
+          try {
+            const res = await this.callServer('portal_login', {});
+            if (res && res.success) {
+              this.sessionToken = res.token;
+              this.currentUser = res.user;
+              await this.loadPlatformData();
+            } else {
+              alert((res && res.error) || 'Gagal login.');
+            }
+          } finally {
+            this.loggingIn = false;
+          }
+        },
+        async loadPlatformData() {
+          const [apps, pegs, units, jabs] = await Promise.all([
+            this.callServer('get_app_list'),
+            this.callServer('get_master_pegawai'),
+            this.callServer('get_master_unit'),
+            this.callServer('get_master_jabatan')
+          ]);
+          if (apps && apps.success) this.appList = apps.data || [];
+          if (pegs && pegs.success) this.pegawaiList = pegs.data || [];
+          if (units && units.success) this.unitList = units.data || [];
+          if (jabs && jabs.success) this.jabatanList = jabs.data || [];
+        },
+        async launchApp(app) {
+          const res = await this.callServer('create_ticket', { target_app: app.kode_app });
+          if (res && res.success && res.ticket) {
+            const url = app.url_exec + (app.url_exec.includes('?') ? '&' : '?') + 'ticket=' + encodeURIComponent(res.ticket);
+            window.open(url, '_blank');
+          } else {
+            alert('Gagal menerbitkan tiket SSO: ' + ((res && res.error) || ''));
+          }
+        },
+        logoutPortal() {
+          this.callServer('portal_logout');
+          this.sessionToken = '';
+          this.currentUser = null;
+        }
+      },
+      mounted() {
+        if (this.isDarkMode) document.documentElement.classList.add('dark');
+        // Auto-check active session
+        this.handlePortalLogin();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
