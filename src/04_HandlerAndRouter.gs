@@ -654,8 +654,7 @@ function createAccessTicket_(userId, appCode, context) {
   var ticket = 't_' + Utilities.getUuid() + '_' + Date.now();
   var now = new Date();
   var record = { id: getNextId_(SHEETS.TICKETS), ticket: ticket, user_id: String(realUserId), app_code: appCode || '', issued_at: now.toISOString(), expires_at: new Date(now.getTime() + TICKET_TTL_SECONDS * 1000).toISOString(), created_at: now.toISOString() };
-  getSheet_(SHEETS.TICKETS).appendRow(HEADERS[SHEETS.TICKETS].map(function(h) { return record[h] || ''; }));
-  invalidateCache_(SHEETS.TICKETS);
+  appendRow_(SHEETS.TICKETS, record);
   if (context && context.user) {
     try {
       logAudit_({ actorId: context.user.id, action: 'ticket.create', resourceType: 'auth', resourceId: ticket, result: 'SUCCESS', metadata: { appCode: appCode, requestedUserId: userId || 'self' } });

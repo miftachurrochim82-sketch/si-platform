@@ -34,11 +34,11 @@
           <td class="table-td font-medium text-gray-900 dark:text-white">{{ ev.actor_id }}</td>
           <td class="table-td text-gray-500 dark:text-gray-400"><span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded text-xs font-mono">{{ ev.action }}</span></td>
           <td class="table-td text-gray-500 dark:text-gray-400">{{ ev.resource_type }} <span v-if="ev.resource_id" class="text-xs text-gray-400">#{{ ev.resource_id }}</span></td>
-          <td class="table-td">
-            <span class="badge" :class="ev.result === 'SUCCESS' ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'">
-              <i :class="ev.result === 'SUCCESS' ? 'ph-check mr-1' : 'ph-x mr-1'"></i> {{ ev.result }}
-            </span>
-          </td>
+                    <td class="table-td">
+                      <span class="badge" :class="ev.result === 'SUCCESS' ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'">
+                        <i class="ph mr-1" :class="ev.result === 'SUCCESS' ? 'ph-check' : 'ph-x'"></i> {{ ev.result }}
+                      </span>
+                    </td>
         </tr>
       </tbody>
     </table>
