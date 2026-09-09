@@ -1,8 +1,8 @@
 <!-- ==================== A7_Katalog.html — Permissions Catalog View ==================== -->
 <div v-if="currentPage === 'permissions' && !loading" class="space-y-4">
   <div class="relative w-full sm:w-64">
-    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-    <input v-model="permissionSearch" @input="debouncedFetchPermissions" placeholder="Cari permission..." class="form-input pl-10 bg-gray-50 dark:bg-gray-900" />
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    <input v-model="permissionSearch" @input="debouncedFetchPermissions" placeholder="Cari izin/resource..." class="form-input pl-9 bg-slate-50 dark:bg-slate-900" />
   </div>
   <div class="card overflow-x-auto">
     <table class="min-w-full">
@@ -14,18 +14,18 @@
           <th class="table-th">Description</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
         <tr v-if="paginatedPermissions.length === 0">
-          <td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-            <i class="ph ph-key text-4xl mb-2 text-gray-400"></i>
-            <p>Tidak ada permission yang ditemukan.</p>
+          <td colspan="4" class="empty-state">
+            <i class="fa-solid fa-key text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+            <p class="text-xs font-semibold">Tidak ada permission yang ditemukan.</p>
           </td>
         </tr>
-        <tr v-for="perm in paginatedPermissions" :key="perm.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-          <td class="table-td font-medium text-gray-900 dark:text-white capitalize">{{ perm.resource }}</td>
-          <td class="table-td text-gray-500 dark:text-gray-400"><span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">{{ perm.action }}</span></td>
-          <td class="table-td font-mono text-xs text-brand-700 dark:text-brand-400">{{ perm.code }}</td>
-          <td class="table-td text-gray-500 dark:text-gray-400">{{ perm.description || '-' }}</td>
+        <tr v-for="perm in paginatedPermissions" :key="perm.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+          <td class="table-td font-bold text-slate-900 dark:text-white capitalize">{{ perm.resource }}</td>
+          <td class="table-td text-slate-500 dark:text-slate-400"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs font-mono font-bold">{{ perm.action }}</span></td>
+          <td class="table-td font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">{{ perm.code }}</td>
+          <td class="table-td text-slate-600 dark:text-slate-300">{{ perm.description || '-' }}</td>
         </tr>
       </tbody>
     </table>

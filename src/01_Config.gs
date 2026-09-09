@@ -23,14 +23,12 @@ var DRIVE_BACKUP_FOLDER_ID = '1xzz6gHtPirRaRvMjCATG-2U1tEVrHTy_';
 
 // ==================== APLIKASI TERDAFTAR AWAL (SEED SAJA) ====================
 var REGISTERED_APPS = Object.freeze([
-  { code: 'SIMPEG', name: 'Manajemen Kepegawaian', description: 'Sistem Informasi Manajemen Pegawai', url: 'https://script.google.com/macros/s/AKfycbxCpBB4HtAIfKoLDKT5pKev8Xl9KhMjXPfcnSceeOo5r_tgudNXZOSb_q1inOG8tmQ/exec', icon: 'ph ph-users', permission: 'user.read' },
-  { code: 'SIKOMPETENSI', name: 'SI-PENGEMBANGAN-KOMPETENSI', description: 'Manajemen pengembangan kompetensi pegawai', url: 'https://script.google.com/macros/s/AKfycbzdvMJsp0RzSKu7X-cj7pYi_iHHTLfvJs8FVAZR-IfwqzALZbx-aim-mBD6buo1hynm/exec', icon: 'ph ph-graduation-cap', permission: 'user.read' },
-  { code: 'SILAHAR', name: 'SI-LAPORAN-HARIAN', description: 'Laporan harian pegawai', url: 'https://script.google.com/macros/s/AKfycbyjssIwRcvLAlXg_lqbNYqVSTP2kROejlBIOHKQMTyGq1OOZsHicupxQzZQW8W89wcy/exec', icon: 'ph ph-file-text', permission: 'user.read' },
-  { code: 'SIPENGAWASAN', name: 'SI-PENGAWASAN', description: 'Pengawasan internal', url: 'https://script.google.com/macros/s/AKfycbwlPueLcyijm5SOagXXfpGronGuCl1solPi5yqVjqrKS4ivd3EzxMq_psn2yG66UaWheA/exec', icon: 'ph ph-shield-warning', permission: 'user.read' },
-  
-  { code: 'SIPELAPORAN', name: 'SI-PELAPORAN', description: 'Sistem informasi pelaporan pegawai', url: 'https://script.google.com/macros/s/AKfycbxoK5-cANH_yzX3WC1MyinwJztYoed0jp3oERGJ8LOfpALO6ITmet-ubQ-xiBloSjqU0g/exec', icon: 'ph ph-file-text', permission: 'user.read' },
-  
-  { code: 'SIUJI', name: 'SI-UJI KONEKSI', description: 'Aplikasi uji integrasi dan koneksi', url: 'https://script.google.com/macros/s/AKfycbx0j0JC-2GCwLjCrFB8yCklztC5_19EqqLJZw4b_fRhho1bAQXfyS82SlHDuVPfnzbQ/exec', icon: 'ph ph-plug', permission: 'user.read' }
+  { code: 'SIMPEG', name: 'Manajemen Kepegawaian', description: 'Sistem Informasi Manajemen Pegawai', url: 'https://script.google.com/macros/s/AKfycbxCpBB4HtAIfKoLDKT5pKev8Xl9KhMjXPfcnSceeOo5r_tgudNXZOSb_q1inOG8tmQ/exec', icon: 'fa-solid fa-users', permission: 'user.read' },
+  { code: 'SIKOMPETENSI', name: 'SI-PENGEMBANGAN-KOMPETENSI', description: 'Manajemen pengembangan kompetensi pegawai', url: 'https://script.google.com/macros/s/AKfycbzdvMJsp0RzSKu7X-cj7pYi_iHHTLfvJs8FVAZR-IfwqzALZbx-aim-mBD6buo1hynm/exec', icon: 'fa-solid fa-graduation-cap', permission: 'user.read' },
+  { code: 'SILAHAR', name: 'SI-LAPORAN-HARIAN', description: 'Laporan harian pegawai', url: 'https://script.google.com/macros/s/AKfycbyjssIwRcvLAlXg_lqbNYqVSTP2kROejlBIOHKQMTyGq1OOZsHicupxQzZQW8W89wcy/exec', icon: 'fa-solid fa-file-lines', permission: 'user.read' },
+  { code: 'SIPENGAWASAN', name: 'SI-PENGAWASAN', description: 'Pengawasan internal', url: 'https://script.google.com/macros/s/AKfycbwlPueLcyijm5SOagXXfpGronGuCl1solPi5yqVjqrKS4ivd3EzxMq_psn2yG66UaWheA/exec', icon: 'fa-solid fa-shield-halved', permission: 'user.read' },
+  { code: 'SIPELAPORAN', name: 'SI-PELAPORAN', description: 'Sistem informasi pelaporan pegawai', url: 'https://script.google.com/macros/s/AKfycbxoK5-cANH_yzX3WC1MyinwJztYoed0jp3oERGJ8LOfpALO6ITmet-ubQ-xiBloSjqU0g/exec', icon: 'fa-solid fa-file-signature', permission: 'user.read' },
+  { code: 'SIUJI', name: 'SI-UJI KONEKSI', description: 'Aplikasi uji integrasi dan koneksi', url: 'https://script.google.com/macros/s/AKfycbx0j0JC-2GCwLjCrFB8yCklztC5_19EqqLJZw4b_fRhho1bAQXfyS82SlHDuVPfnzbQ/exec', icon: 'fa-solid fa-plug', permission: 'user.read' }
 ]);
 
 // ==================== NAMA SHEET ====================

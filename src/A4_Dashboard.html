@@ -1,57 +1,57 @@
 <!-- ==================== A4_Dashboard.html — Dashboard View ==================== -->
 <div v-if="currentPage === 'dashboard' && !loading" class="space-y-6">
   <!-- Statistik Utama -->
-  <div v-if="Object.keys(dashboardStats).length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-    <div class="card p-4 flex flex-col items-center justify-center text-center gap-2 hover:-translate-y-1 transition-transform duration-300 border-b-4" :class="statBorderColors[key] || 'border-gray-200'" v-for="(stat, key) in displayableStats" :key="key">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl" :class="statColors[key] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'">
-        <i :class="statIcons[key] || 'ph ph-chart-bar'"></i>
+  <div v-if="Object.keys(dashboardStats).length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+    <div class="card p-4 flex flex-col items-center justify-center text-center gap-2 hover:-translate-y-1 transition-transform duration-300 border-b-4" :class="statBorderColors[key] || 'border-slate-200'" v-for="(stat, key) in displayableStats" :key="key">
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg" :class="statColors[key] || 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
+        <i :class="statIcons[key] || 'fa-solid fa-chart-line'"></i>
       </div>
       <div>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white leading-none">{{ stat.toLocaleString('id-ID') }}</p>
-        <p class="text-xs font-medium text-gray-500 mt-1 dark:text-gray-400">{{ statLabels[key] || key }}</p>
+        <p class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white leading-none">{{ stat.toLocaleString('id-ID') }}</p>
+        <p class="text-[11px] font-bold text-slate-500 mt-1 dark:text-slate-400 uppercase tracking-wider">{{ statLabels[key] || key }}</p>
       </div>
     </div>
   </div>
   <div v-else class="empty-state">
-    <i class="ph ph-chart-line text-4xl mb-2 text-gray-400"></i>
-    <p>Tidak ada data statistik. Muat ulang atau periksa koneksi.</p>
+    <i class="fa-solid fa-chart-line text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+    <p class="text-xs font-semibold">Tidak ada data statistik. Muat ulang atau periksa koneksi.</p>
   </div>
 
   <!-- Status Sistem & Ringkasan Aplikasi -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <!-- Status Sistem -->
     <div class="card p-5">
-      <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
-        <i class="ph ph-heartbeat text-red-500"></i> Status Sistem
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-heart-pulse text-rose-500"></i> Status Sistem & Server
       </h3>
       <div v-if="healthStatus && healthStatus.checks">
         <div class="flex items-center gap-2">
-          <span class="badge" :class="healthStatus.status === 'HEALTHY' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'">
+          <span class="badge" :class="healthStatus.status === 'HEALTHY' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'">
             {{ healthStatus.status }}
           </span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">{{ healthStatus.timestamp }}</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">{{ healthStatus.timestamp }}</span>
         </div>
-        <ul class="mt-3 space-y-1 text-sm">
-          <li v-for="(check, key) in healthStatus.checks" :key="key" class="flex items-center gap-2">
-            <i :class="check.status === 'OK' ? 'ph ph-check-circle text-green-500' : 'ph ph-x-circle text-red-500'"></i>
-            <span>{{ key }}: {{ check.status }}</span>
+        <ul class="mt-3 space-y-1.5 text-xs">
+          <li v-for="(check, key) in healthStatus.checks" :key="key" class="flex items-center gap-2 font-medium">
+            <i :class="check.status === 'OK' ? 'fa-solid fa-circle-check text-emerald-500' : 'fa-solid fa-circle-xmark text-rose-500'"></i>
+            <span class="text-slate-700 dark:text-slate-300 capitalize">{{ key }}: {{ check.status }}</span>
           </li>
         </ul>
       </div>
-      <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+      <div v-else class="text-xs text-slate-500 dark:text-slate-400">
         Status sistem tidak tersedia.
       </div>
     </div>
 
     <!-- Ringkasan Aplikasi -->
     <div class="card p-5">
-      <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
-        <i class="ph ph-grid-four text-brand-500"></i> Aplikasi
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-shapes text-emerald-600 dark:text-emerald-400"></i> Portal Aplikasi
       </h3>
-      <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ data.apps.length }}</p>
-      <p class="text-sm text-gray-500 dark:text-gray-400">aplikasi terdaftar</p>
-      <button @click="switchPage('apps')" class="btn btn-secondary mt-3">
-        Kelola Aplikasi
+      <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ data.apps.length }}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Aplikasi terintegrasi ke Portal SSO</p>
+      <button @click="switchPage('apps')" class="btn btn-secondary mt-3 text-xs">
+        Kelola Katalog Aplikasi
       </button>
     </div>
   </div>
@@ -59,38 +59,38 @@
   <!-- Chart & Recent Logs -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="card p-5 lg:col-span-2 flex flex-col">
-      <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-        <i class="ph ph-trend-up text-brand-500"></i> Aktivitas Sistem
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-arrow-trend-up text-emerald-600 dark:text-emerald-400"></i> Tren Aktivitas Sistem
       </h3>
-      <div class="relative flex-1 min-h-[300px]">
+      <div class="relative flex-1 min-h-[280px]">
         <canvas id="dashboardChart"></canvas>
       </div>
     </div>
 
     <div class="card flex flex-col">
-      <div class="p-5 border-b border-gray-100 dark:border-gray-700">
-        <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-          <i class="ph ph-clock-counter-clockwise text-blue-500"></i> Log Terbaru
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Log Sesi Terbaru
         </h3>
       </div>
-      <div class="p-0 overflow-y-auto h-[300px] custom-scrollbar">
-        <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-          <li v-for="log in dashboardStats.recentLogs || []" :key="log.id" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+      <div class="p-0 overflow-y-auto h-[280px]">
+        <ul class="divide-y divide-slate-100 dark:divide-slate-700">
+          <li v-for="log in dashboardStats.recentLogs || []" :key="log.id" class="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center mt-1" :class="log.result === 'SUCCESS' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'">
-                <i :class="log.result === 'SUCCESS' ? 'ph ph-check' : 'ph ph-x'"></i>
+              <div class="w-7 h-7 rounded-full flex flex-shrink-0 items-center justify-center mt-0.5 text-xs" :class="log.result === 'SUCCESS' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'">
+                <i :class="log.result === 'SUCCESS' ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i>
               </div>
-              <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ log.action }} <span class="text-gray-500 font-normal">pada</span> {{ log.resource_type }}</p>
-                <div class="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  <span class="font-mono text-brand-600 dark:text-brand-400">{{ log.actor_id }}</span>
+              <div class="truncate">
+                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ log.action }} <span class="text-slate-400 font-normal">pada</span> {{ log.resource_type }}</p>
+                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ log.actor_id }}</span>
                   <span>&bull;</span>
                   <span>{{ formatDate(log.timestamp) }}</span>
                 </div>
               </div>
             </div>
           </li>
-          <li v-if="!(dashboardStats.recentLogs && dashboardStats.recentLogs.length)" class="p-8 text-center text-gray-500">
+          <li v-if="!(dashboardStats.recentLogs && dashboardStats.recentLogs.length)" class="p-8 text-center text-xs text-slate-400">
             Belum ada log terekam hari ini.
           </li>
         </ul>
