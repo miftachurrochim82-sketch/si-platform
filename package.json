@@ -5,7 +5,8 @@
   "scripts": {
     "push": "clasp push",
     "pull": "clasp pull",
-    "deploy": "clasp deploy"
+    "deploy": "clasp deploy",
+    "status": "clasp status"
   },
   "repository": {
     "type": "git",
@@ -17,7 +18,8 @@
     "portal",
     "simpeg",
     "trenggalek",
-    "si-platform"
+    "si-platform",
+    "clasp"
   ],
   "author": "miftachurrochim82-sketch",
   "license": "MIT",

@@ -1,0 +1,46 @@
+name: Deploy SI-PLATFORM to Google Apps Script (CI/CD)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.clasp.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📦 Install Google Clasp
+        run: sudo npm install -g @google/clasp
+
+      - name: 🔑 Setup Clasp Authentication (.clasprc.json)
+        run: |
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+
+      - name: ⚙️ Setup Target Script ID
+        if: env.CLASP_SCRIPT_ID != ''
+        run: |
+          node -e "
+            const fs = require('fs');
+            const clasp = JSON.parse(fs.readFileSync('.clasp.json', 'utf8'));
+            clasp.scriptId = process.env.CLASP_SCRIPT_ID;
+            fs.writeFileSync('.clasp.json', JSON.stringify(clasp, null, 2));
+          "
+        env:
+          CLASP_SCRIPT_ID: ${{ secrets.CLASP_SCRIPT_ID }}
+
+      - name: 🚀 Push Code to Google Apps Script
+        run: clasp push --force

@@ -5,6 +5,52 @@ Aplikasi web portal utama berbasis **Google Apps Script (GAS)**, **Vue 3**, dan 
 
 ---
 
+## 🏛️ Identitas Aplikasi Google Apps Script
+
+| Properti | Nilai | Keterangan |
+|---|---|---|
+| **App Code** | `SIPLATFORM` | Kode identitas aplikasi portal utama |
+| **Backend Library** | `CoreLib` (`1GmeYflfMpRa1iTVgFHRD6K1DMoxc9OoKqpuucPJXgNZ9XBK06O7wgDkO`) | Global Core Foundation v2.0 |
+| **Frontend CDN** | `frontend-cdn@v2.2.5` | Shared UI Components & AppCore |
+| **Runtime** | `V8` | Modern JavaScript Engine |
+| **TimeZone** | `Asia/Jakarta` | WIB (Waktu Indonesia Barat) |
+
+### OAuth Scopes yang Digunakan:
+- `https://www.googleapis.com/auth/spreadsheets` (Akses Google Sheets DB)
+- `https://www.googleapis.com/auth/drive` (Folder Evidence & Backup)
+- `https://www.googleapis.com/auth/script.storage` (Script Properties & Sesi)
+- `https://www.googleapis.com/auth/script.external_request` (SSO SI-Platform HTTP)
+- `https://www.googleapis.com/auth/userinfo.email` & `openid` (Identitas Google)
+
+---
+
+## 📦 Struktur Folder Repository
+
+```text
+si-platform/
+│
+├── 🤖 .github/
+│   └── workflows/
+│       └── deploy-gas.yml          # Skrip CI/CD otomatis deploy ke GAS via Google Clasp
+│
+├── 📁 src/                          # KODE SUMBER PORTAL APPS SCRIPT
+│   ├── appsscript.json             # Manifest GAS, V8 engine, scopes, & library CoreLib
+│   ├── 01_Config.gs                # Definisi konstanta, header master, & cache helper
+│   ├── 02_AuthEngine.gs            # Engine SSO Ticket generation, validation, & user lookup
+│   ├── 03_MasterDataEngine.gs      # CRUD & query engine Pegawai, Unit, Jabatan, & App Registry
+│   ├── 04_PortalRouter.gs          # Entrypoint doGet, doPost, & dispatcher API
+│   ├── 05_SeedMasterData.gs        # Seeder data master SIMPEG & aplikasi terdaftar
+│   ├── 99_PlatformTestSuite.gs     # Test suite otomatis validasi tiket SSO & database
+│   └── Index.html                  # Tampilan Web App Portal SSO & App Launcher (Vue 3)
+│
+├── .clasp.json                     # Konfigurasi Clasp (target rootDir: "src")
+├── .gitignore                      # Mengabaikan node_modules & credential
+├── package.json                    # NPM scripts (push, pull, deploy, status)
+└── README.md                       # Dokumentasi lengkap & panduan penggunaan
+```
+
+---
+
 ## 🏛️ Peran dalam Ekosistem Terpadu
 
 ```text
@@ -61,24 +107,12 @@ Aplikasi web portal utama berbasis **Google Apps Script (GAS)**, **Vue 3**, dan 
 
 ---
 
-## 📁 Struktur Berkas
+## 🔄 CI/CD Deployment Otomatis (GitHub Actions & Clasp)
 
-```text
-si-platform/
-├── 01_Config.gs              # Definisi konstanta, header master, & cache helper
-├── 02_AuthEngine.gs          # Engine SSO Ticket generation, validation, & user lookup
-├── 03_MasterDataEngine.gs    # CRUD & query engine Pegawai, Unit, Jabatan, & App Registry
-├── 04_PortalRouter.gs        # Entrypoint doGet, doPost, & dispatcher API
-├── 05_SeedMasterData.gs      # Seeder data master SIMPEG & aplikasi terdaftar
-├── 99_PlatformTestSuite.gs   # Test suite otomatis validasi tiket SSO & database
-├── Index.html                # Tampilan Web App Portal SSO & App Launcher (Vue 3)
-├── appsscript.json           # Manifest GAS & OAuth Scopes
-├── package.json              # NPM scripts & metadata
-└── README.md                 # Dokumentasi teknis
-```
+Setiap perubahan di folder `src/` yang di-push ke branch `main` akan otomatis di-deploy ke project Google Apps Script via GitHub Actions (`.github/workflows/deploy-gas.yml`).
 
 ---
 
 ## 📝 Lisensi
-Dikelola oleh Pemerintah Kabupaten Trenggalek.
+Dikelola oleh Pemerintah Kabupaten Trenggalek.  
 Lisensi: MIT.
