@@ -225,6 +225,38 @@
             { key: 'settings', label: 'Pengaturan Global', icon: 'fa-solid fa-gear', permission: 'setting.read' }
           ],
 
+          menuGroups: [
+            {
+              title: 'Portal & Utama',
+              items: [
+                { key: 'apps', label: 'Katalog Aplikasi', icon: 'fa-solid fa-shapes', permission: 'application.read' },
+                { key: 'dashboard', label: 'Dashboard Global', icon: 'fa-solid fa-gauge-high', permission: 'dashboard.read' }
+              ]
+            },
+            {
+              title: 'Pengguna & Akses',
+              items: [
+                { key: 'users', label: 'Manajemen User', icon: 'fa-solid fa-users-gear', permission: 'user.read' },
+                { key: 'roles', label: 'Hak Akses & Roles', icon: 'fa-solid fa-shield-halved', permission: 'role.read' },
+                { key: 'permissions', label: 'Katalog Izin', icon: 'fa-solid fa-key', permission: 'permission.read' }
+              ]
+            },
+            {
+              title: 'Storage & Layanan',
+              items: [
+                { key: 'files', label: 'File Storage', icon: 'fa-solid fa-folder-open', permission: 'file.read' },
+                { key: 'notifications', label: 'Notifikasi Sistem', icon: 'fa-solid fa-bell', permission: 'notification.read' }
+              ]
+            },
+            {
+              title: 'Tata Kelola & Sistem',
+              items: [
+                { key: 'audit', label: 'Audit Trail & Log', icon: 'fa-solid fa-clipboard-list', permission: 'audit.read' },
+                { key: 'settings', label: 'Pengaturan Global', icon: 'fa-solid fa-gear', permission: 'setting.read' }
+              ]
+            }
+          ],
+
           data: {
             users: [],
             roles: [],
@@ -380,9 +412,19 @@
         allowedMenuItems() {
           const perms = this.session.user?.permissions;
           if (!Array.isArray(perms) || perms.length === 0) {
-            return []; // jangan tampilkan menu apa pun
+            return [];
           }
           return this.menuItems.filter(item => perms.includes(item.permission));
+        },
+        allowedMenuGroups() {
+          const perms = this.session.user?.permissions;
+          if (!Array.isArray(perms) || perms.length === 0) {
+            return [];
+          }
+          return (this.menuGroups || []).map(group => ({
+            title: group.title,
+            items: (group.items || []).filter(item => perms.includes(item.permission))
+          })).filter(group => group.items.length > 0);
         },
         displayableStats() {
           const { chartData, recentLogs, chart_data, recent_logs, ...numericStats } = this.dashboardStats || {};
