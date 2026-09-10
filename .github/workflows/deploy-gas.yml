@@ -23,7 +23,50 @@ jobs:
 
       - name: 🔑 Setup Clasp Authentication (.clasprc.json)
         run: |
-          echo "$CLASPRC_JSON" > ~/.clasprc.json
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const os = require('os');
+
+            const raw = process.env.CLASPRC_JSON || '{}';
+            let parsed = {};
+            try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
+
+            const d = (parsed.tokens && parsed.tokens.default) || (parsed.token ? parsed : {});
+            const clientId = d.client_id || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientId) || '1072944905499-vm2v2i5dvn0a0d2o4ca36ilvge8cvbn0.apps.googleusercontent.com';
+            const clientSecret = d.client_secret || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientSecret) || 'v6V3fKV_zWU7iw1DrpOlRknX';
+            const refreshToken = d.refresh_token || (parsed.token && parsed.token.refresh_token) || '';
+            const accessToken = d.access_token || (parsed.token && parsed.token.access_token) || '';
+
+            const hybridAuth = {
+              token: {
+                access_token: accessToken,
+                scope: 'https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.webapp.deploy https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/cloud-platform',
+                token_type: 'Bearer',
+                expiry_date: Date.now() + 3600000,
+                refresh_token: refreshToken
+              },
+              oauth2ClientSettings: {
+                clientId: clientId,
+                clientSecret: clientSecret,
+                redirectUri: 'http://localhost'
+              },
+              isLocalCreds: false,
+              tokens: {
+                default: {
+                  client_id: clientId,
+                  client_secret: clientSecret,
+                  type: 'authorized_user',
+                  refresh_token: refreshToken,
+                  access_token: accessToken
+                }
+              }
+            };
+
+            const destPath = path.join(os.homedir(), '.clasprc.json');
+            fs.writeFileSync(destPath, JSON.stringify(hybridAuth, null, 2));
+            console.log('✅ .clasprc.json hybrid config written successfully to', destPath);
+          "
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
 
@@ -37,9 +80,9 @@ jobs:
               clasp.scriptId = targetId.trim();
               clasp.rootDir = 'src';
               fs.writeFileSync('.clasp.json', JSON.stringify(clasp, null, 2));
-              console.log('Script ID configured:', targetId);
+              console.log('✅ Target Script ID configured:', targetId);
             } else {
-              console.log('Using scriptId from .clasp.json');
+              console.log('ℹ️ Using scriptId from existing .clasp.json');
             }
           "
         env:
