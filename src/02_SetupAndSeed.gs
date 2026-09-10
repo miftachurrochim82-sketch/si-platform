@@ -127,6 +127,64 @@ function seedApplications_() {
 
 function seedApplications() { return seedApplications_(); }
 
+/**
+ * Jalankan fungsi ini 1x di SI-PLATFORM Editor untuk membersihkan karakter '++'
+ * dan menyinkronkan seluruh URL aplikasi resmi langsung ke Sheet 'applications'.
+ */
+function cleanAndSyncApplications() {
+  var appsData = [
+    { code: 'SIMPEG', name: 'Manajemen Kepegawaian', description: 'Sistem Informasi Manajemen Pegawai', url: 'https://script.google.com/macros/s/AKfycbxCpBB4HtAIfKoLDKT5pKev8Xl9KhMjXPfcnSceeOo5r_tgudNXZOSb_q1inOG8tmQ/exec', icon: 'fa-solid fa-users' },
+    { code: 'SIKOMPETENSI', name: 'SI-KOMPETENSI', description: 'Manajemen pengembangan kompetensi pegawai', url: 'https://script.google.com/macros/s/AKfycbzBy8WWtMeTh2QfihQJ0yjhSlBFFgdOOY6ZFV2S_RDCO0MXpaPEY1sUqqgdO34iWQAQ/exec', icon: 'fa-solid fa-graduation-cap' },
+    { code: 'SILAHAR', name: 'SI-LAPORAN-HARIAN', description: 'Laporan harian pegawai', url: 'https://script.google.com/macros/s/AKfycbyjssIwRcvLAlXg_lqbNYqVSTP2kROejlBIOHKQMTyGq1OOZsHicupxQzZQW8W89wcy/exec', icon: 'fa-solid fa-file-lines' },
+    { code: 'SIPENGAWASAN', name: 'SI-PENGAWASAN', description: 'Pengawasan internal', url: 'https://script.google.com/macros/s/AKfycbwlPueLcyijm5SOagXXfpGronGuCl1solPi5yqVjqrKS4ivd3EzxMq_psn2yG66UaWheA/exec', icon: 'fa-solid fa-shield-halved' },
+    { code: 'SIPELAPORAN', name: 'SI-PELAPORAN', description: 'Sistem informasi pelaporan pegawai', url: 'https://script.google.com/macros/s/AKfycbxoK5-cANH_yzX3WC1MyinwJztYoed0jp3oERGJ8LOfpALO6ITmet-ubQ-xiBloSjqU0g/exec', icon: 'fa-solid fa-file-signature' },
+    { code: 'SIUJI', name: 'SI-UJI KONEKSI', description: 'Aplikasi uji integrasi dan koneksi', url: 'https://script.google.com/macros/s/AKfycbx0j0JC-2GCwLjCrFB8yCklztC5_19EqqLJZw4b_fRhho1bAQXfyS82SlHDuVPfnzbQ/exec', icon: 'fa-solid fa-plug' }
+  ];
+
+  var sheet = getSheet_(SHEETS.APPLICATIONS);
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) {
+    Logger.log('Sheet applications kosong, menjalankan seed...');
+    seedApplications_();
+    return;
+  }
+
+  var headers = data[0];
+  var colCode = headers.indexOf('code');
+  var colUri = headers.indexOf('redirect_uri');
+  var colUpdated = headers.indexOf('updated_at');
+
+  var updatedCount = 0;
+  for (var i = 1; i < data.length; i++) {
+    var code = String(data[i][colCode] || '').trim();
+    var currentUri = String(data[i][colUri] || '');
+    
+    // 1. Bersihkan tanda '++' atau spasi liar
+    var cleanedUri = currentUri.replace(/^[+\s]+|[+\s]+$/g, '').trim();
+
+    // 2. Cocokkan dengan daftar URL resmi jika ada
+    var match = null;
+    for (var m = 0; m < appsData.length; m++) {
+      if (appsData[m].code === code) { match = appsData[m]; break; }
+    }
+    if (match && match.url) {
+      cleanedUri = match.url.trim();
+    }
+
+    if (cleanedUri !== currentUri) {
+      sheet.getRange(i + 1, colUri + 1).setValue(cleanedUri);
+      if (colUpdated !== -1) sheet.getRange(i + 1, colUpdated + 1).setValue(new Date().toISOString());
+      Logger.log('✅ [' + code + '] URL diperbarui dan dibersihkan:\n   -> ' + cleanedUri);
+      updatedCount++;
+    }
+  }
+
+  invalidateCache_(SHEETS.APPLICATIONS);
+  Logger.log('==========================================================');
+  Logger.log('🎉 Pembersihan Selesai! Total ' + updatedCount + ' URL aplikasi diperbarui/dibersihkan.');
+  Logger.log('==========================================================');
+}
+
 // Sinkron 1 URL aplikasi dari kode ke Sheet tanpa setup penuh. Contoh: syncAppUrlFromCode('SIUJI')
 function syncAppUrlFromCode(appCode) { return syncAppUrlFromCode_(appCode); }
 function syncAppUrlFromCode_(appCode) {
