@@ -700,7 +700,13 @@ function listRegisteredApps_(query, context) {
     apps = REGISTERED_APPS.map(function(app) { return { code: app.code, name: app.name, description: app.description || '', url: app.url || '', status: 'active', icon: app.icon || '' }; });
   } else {
     apps = apps.filter(function(a) { return String(a.status).toLowerCase() === 'active'; })
-      .map(function(app) { var c = Object.assign({}, app); c.url = app.redirect_uri || app.url || ''; c.icon = app.icon_url || app.icon || ''; return c; });
+      .map(function(app) {
+        var c = Object.assign({}, app);
+        var rawUrl = String(app.redirect_uri || app.url || '').replace(/^[+\s]+|[+\s]+$/g, '').trim();
+        c.url = rawUrl;
+        c.icon = app.icon_url || app.icon || '';
+        return c;
+      });
   }
   return { data: apps };
 }

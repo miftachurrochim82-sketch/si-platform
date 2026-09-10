@@ -576,7 +576,9 @@
             });
 
             if (res.success && res.data && res.data.ticket) {
-              const targetUrl = app.url + '?ticket=' + encodeURIComponent(res.data.ticket);
+              const cleanUrl = String(app.url || '').replace(/^[+\s]+|[+\s]+$/g, '').trim();
+              const sep = cleanUrl.includes('?') ? '&' : '?';
+              const targetUrl = cleanUrl + sep + 'ticket=' + encodeURIComponent(res.data.ticket);
               window.open(targetUrl, '_blank');
             } else {
               throw new Error(res.error?.message || 'Gagal membuat tiket keamanan.');
