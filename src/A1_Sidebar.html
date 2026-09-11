@@ -32,7 +32,7 @@
 
   <!-- Grouped Navigation Body -->
   <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-6 no-scrollbar">
-    <div v-for="(group, gIdx) in (allowedMenuGroups.length ? allowedMenuGroups : [{ title: 'Menu Utama', items: allowedMenuItems }])" :key="gIdx" class="space-y-1.5">
+    <div v-for="(group, gIdx) in ((allowedMenuGroups && allowedMenuGroups.length) ? allowedMenuGroups : [{ title: 'Menu Utama', items: allowedMenuItems || [] }])" :key="gIdx" class="space-y-1.5">
       <!-- Section Category Title -->
       <div v-if="group.title && (!sidebarCollapsed || isMobile)" class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/80 flex items-center gap-1.5">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -41,7 +41,7 @@
       
       <!-- Menu Items in Group -->
       <div class="space-y-1">
-        <button v-for="item in group.items" :key="item.key" 
+        <button v-for="item in (group.items || [])" :key="item.key" 
                 @click="switchPage(item.key)" 
                 class="relative flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs sm:text-sm font-semibold group" 
                 :class="[

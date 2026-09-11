@@ -23,13 +23,13 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!data.auditEvents.length">
+        <tr v-if="!(data.auditEvents || []).length">
           <td colspan="5" class="empty-state">
             <i class="fa-solid fa-clipboard-list text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Tidak ada audit event.</p>
           </td>
         </tr>
-        <tr v-for="ev in data.auditEvents" :key="ev.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+        <tr v-for="ev in (data.auditEvents || [])" :key="ev.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
           <td class="table-td text-slate-500 dark:text-slate-400 text-xs">{{ formatDate(ev.timestamp) }}</td>
           <td class="table-td font-bold text-slate-900 dark:text-white">{{ ev.actor_id }}</td>
           <td class="table-td text-slate-500 dark:text-slate-400"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-mono font-bold">{{ ev.action }}</span></td>

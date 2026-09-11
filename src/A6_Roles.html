@@ -19,14 +19,14 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!paginatedRoles.length">
+        <tr v-if="!(paginatedRoles || []).length">
           <td colspan="5" class="empty-state">
             <i class="fa-solid fa-shield-halved text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Tidak ada role.</p>
             <button @click="openCreateRoleModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-plus"></i> Buat Role</button>
           </td>
         </tr>
-        <tr v-for="role in paginatedRoles" :key="role.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
+        <tr v-for="role in (paginatedRoles || [])" :key="role.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
           <td class="table-td font-mono text-xs text-emerald-700 font-bold dark:text-emerald-400">{{ role.code }}</td>
           <td class="table-td font-bold text-slate-900 dark:text-white">{{ role.name }}</td>
           <td class="table-td text-slate-500 dark:text-slate-400 capitalize">{{ role.scope }}</td>
@@ -103,7 +103,7 @@
           <button @click="showAssignPermissions=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         <div class="p-6 overflow-y-auto max-h-[60vh] grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-          <div v-for="perm in availablePermissions" :key="perm.id" class="flex items-start gap-3 py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-xl">
+          <div v-for="perm in (availablePermissions || [])" :key="perm.id" class="flex items-start gap-3 py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-xl">
             <input type="checkbox" :value="perm.id" v-model="assignedPermissionIds" :id="'perm-'+perm.id" class="rounded mt-1 accent-emerald-600 cursor-pointer">
             <label :for="'perm-'+perm.id" class="text-xs cursor-pointer flex-1 dark:text-slate-300">
               <span class="block font-bold text-slate-800 dark:text-white">{{ perm.description || perm.code }}</span>

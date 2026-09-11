@@ -13,13 +13,13 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!paginatedSettings.length">
+        <tr v-if="!(paginatedSettings || []).length">
           <td colspan="6" class="empty-state">
             <i class="fa-solid fa-gear text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Tidak ada pengaturan global.</p>
           </td>
         </tr>
-        <tr v-for="setting in paginatedSettings" :key="setting.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
+        <tr v-for="setting in (paginatedSettings || [])" :key="setting.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
           <td class="table-td font-mono text-xs text-emerald-700 font-bold dark:text-emerald-400">{{ setting.key }}</td>
           <td class="table-td max-w-xs truncate text-slate-500 dark:text-slate-400 font-mono text-xs" :title="setting.value_json">{{ setting.value_json }}</td>
           <td class="table-td text-slate-500 dark:text-slate-400 text-center"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs font-bold">v{{ setting.version }}</span></td>
@@ -81,8 +81,8 @@
               <tr><th class="table-th w-16 text-center">Versi</th><th class="table-th">Value Historis</th><th class="table-th">Diubah Oleh</th><th class="table-th">Waktu</th></tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-              <tr v-if="!settingHistory.length"><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-xs">Tidak ada data riwayat tersimpan.</td></tr>
-              <tr v-for="ver in settingHistory" :key="ver.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+              <tr v-if="!(settingHistory || []).length"><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-xs">Tidak ada data riwayat tersimpan.</td></tr>
+              <tr v-for="ver in (settingHistory || [])" :key="ver.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                 <td class="table-td text-center font-bold text-slate-700 dark:text-slate-300">v{{ ver.version_no }}</td>
                 <td class="table-td max-w-[200px] truncate font-mono text-xs text-slate-500 dark:text-slate-400" :title="ver.value_json">{{ ver.value_json }}</td>
                 <td class="table-td text-slate-600 dark:text-slate-400 text-xs">{{ ver.updated_by }}</td>

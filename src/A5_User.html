@@ -13,7 +13,7 @@
       </select>
     </div>
     <div class="flex gap-2 w-full sm:w-auto">
-      <button v-if="selectedUsers.length" @click="bulkDeleteUsers" class="btn btn-danger w-full sm:w-auto">
+      <button v-if="(selectedUsers || []).length" @click="bulkDeleteUsers" class="btn btn-danger w-full sm:w-auto">
         <i class="fa-solid fa-trash-can"></i> Hapus Terpilih
       </button>
       <button @click="openCreateUserModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20">
@@ -40,47 +40,50 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!data.users.length">
+        <tr v-if="!(data.users || []).length">
           <td colspan="5" class="empty-state">
             <i class="fa-solid fa-users text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Tidak ada user ditemukan.</p>
             <button @click="openCreateUserModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-plus"></i> Buat Pengguna Baru</button>
           </td>
         </tr>
-        <tr v-for="user in data.users" :key="user.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 transition-colors group">
+        <tr v-for="user in (data.users || [])" :key="user.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 transition-colors group">
           <td class="table-td text-center">
             <input type="checkbox" v-model="selectedUsers" :value="user.id" class="rounded accent-emerald-600 h-4 w-4">
           </td>
           <td class="table-td">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-200 text-emerald-800 flex items-center justify-center font-bold text-xs uppercase dark:from-emerald-900 dark:to-teal-900 dark:text-emerald-300 shadow-sm border border-emerald-300/30">
-                {{ (user.username || 'US').substring(0,2) }}
+              <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300 text-xs">
+                {{ user.display_name ? user.display_name.charAt(0).toUpperCase() : 'U' }}
               </div>
-              <div>
-                <p class="font-bold text-slate-900 dark:text-white">{{ user.display_name }}</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">@{{ user.username }} &bull; {{ user.email }}</p>
+              <div class="truncate">
+                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>{{ user.display_name }}</span>
+                  <span class="text-[10px] font-mono font-normal text-slate-400">@{{ user.username }}</span>
+                </div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ user.email }}</div>
               </div>
             </div>
           </td>
           <td class="table-td">
-            <span class="badge" :class="user.status === 'active' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' : 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700 dark:text-slate-300'">
-              <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+            <span class="badge" :class="user.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'">
+              <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
               {{ user.status }}
             </span>
           </td>
           <td class="table-td">
-            <div class="flex flex-wrap gap-1 max-w-xs">
-              <span v-if="!user.roles || !user.roles.length" class="text-xs text-slate-400 italic">Belum ada role</span>
-              <span v-for="r in user.roles" :key="r" class="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-xs font-bold dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800">
-                {{ r }}
+            <div class="flex flex-wrap gap-1">
+              <span v-for="role in (user.roles || [])" :key="role" class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[10px] font-mono font-bold dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                {{ role }}
               </span>
+              <span v-if="!user.roles || !user.roles.length" class="text-xs text-slate-400 italic">Belum ada role</span>
             </div>
           </td>
           <td class="table-td">
             <div class="flex items-center justify-end gap-1.5 pr-2 sm:pr-4">
-              <button @click="openEditUserModal(user)" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400" title="Edit Pengguna"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
-              <button @click="openAssignRoles(user)" class="p-2 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400" title="Kelola Role"><i class="fa-solid fa-shield-halved text-xs"></i></button>
-              <button @click="deleteUser(user.id)" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400" title="Hapus Pengguna"><i class="fa-solid fa-trash-can text-xs"></i></button>
+              <button @click="openEditUserModal(user)" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400" title="Edit Profil"><i class="fa-solid fa-user-pen text-xs"></i></button>
+              <button @click="openAssignRoles(user)" class="p-2 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400" title="Atur Role"><i class="fa-solid fa-shield-halved text-xs"></i></button>
+              <button @click="deleteUser(user.id)" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400" title="Hapus"><i class="fa-solid fa-trash-can text-xs"></i></button>
             </div>
           </td>
         </tr>
@@ -92,45 +95,40 @@
 
 <!-- ================= MODALS FOR USER MANAGEMENT ================= -->
 <teleport to="body">
-  <!-- User Form Modal -->
+  <!-- Create/Edit User Modal -->
   <transition name="modal">
     <div v-if="showUserModal" class="modal-overlay" @click.self="closeUserModal">
       <div class="modal-box">
         <div class="modal-header">
-          <h3 class="text-base font-bold dark:text-white">{{ userModalMode === 'create' ? 'Tambah Pengguna Baru' : 'Edit Data Pengguna' }}</h3>
+          <h3 class="text-base font-bold dark:text-white">{{ userModalMode === 'create' ? 'Tambah Pengguna Baru' : 'Edit Pengguna' }}</h3>
           <button @click="closeUserModal" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         <div class="p-6 overflow-y-auto space-y-4">
           <div>
-            <label class="form-label">Username</label>
+            <label class="form-label">Username (Login)</label>
             <input v-model="userForm.username" class="form-input" :disabled="userModalMode === 'edit'" placeholder="johndoe">
             <p v-if="userModalMode === 'create' && userForm.username && userForm.username.length < 3" class="text-rose-500 text-xs mt-1">Username minimal 3 karakter.</p>
           </div>
           <div>
-            <label class="form-label">Alamat Email</label>
-            <input type="email" v-model="userForm.email" class="form-input" placeholder="john@trenggalekkab.go.id">
-            <p v-if="userForm.email && !userForm.email.includes('@')" class="text-rose-500 text-xs mt-1">Gunakan format email yang valid.</p>
+            <label class="form-label">Email Resmi</label>
+            <input v-model="userForm.email" type="email" class="form-input" placeholder="john@trenggalekkab.go.id">
+            <p v-if="userForm.email && !userForm.email.includes('@')" class="text-rose-500 text-xs mt-1">Format email tidak valid.</p>
           </div>
           <div>
-            <label class="form-label">Nama Lengkap (Display Name)</label>
-            <input v-model="userForm.display_name" class="form-input" placeholder="John Doe, S.Kom">
+            <label class="form-label">Nama Lengkap & Gelar</label>
+            <input v-model="userForm.display_name" class="form-input" placeholder="John Doe, S.Kom.">
             <p v-if="userForm.display_name && userForm.display_name.length < 3" class="text-rose-500 text-xs mt-1">Nama minimal 3 karakter.</p>
           </div>
-
-          <!-- Field Password (hanya saat create) -->
-          <div v-if="userModalMode === 'create'">
-            <label class="form-label">Password <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional)</span></label>
-            <input type="password" v-model="userForm.password" class="form-input" placeholder="Minimal 6 karakter">
+          <div>
+            <label class="form-label">{{ userModalMode === 'create' ? 'Password' : 'Password Baru (Kosongkan jika tidak diganti)' }}</label>
+            <input v-model="userForm.password" type="password" class="form-input" placeholder="********">
             <p v-if="userForm.password && userForm.password.length < 6" class="text-rose-500 text-xs mt-1">Password minimal 6 karakter.</p>
-            <p v-else class="text-[11px] text-slate-500 mt-1">Kosongkan untuk password default: <strong>password123</strong></p>
           </div>
-
-          <!-- Field Status (hanya saat edit) -->
-          <div v-if="userModalMode === 'edit'">
+          <div>
             <label class="form-label">Status Akun</label>
             <select v-model="userForm.status" class="form-input">
-              <option value="active">Aktif</option>
-              <option value="inactive">Nonaktif</option>
+              <option value="active">Active (Aktif)</option>
+              <option value="inactive">Inactive (Nonaktif)</option>
             </select>
           </div>
         </div>
@@ -150,16 +148,16 @@
     <div v-if="showAssignRoles" class="modal-overlay" @click.self="showAssignRoles=false">
       <div class="modal-box">
         <div class="modal-header">
-          <h3 class="text-base font-bold dark:text-white">Kelola Role: {{ selectedUser?.display_name }}</h3>
+          <h3 class="text-base font-bold dark:text-white">Atur Hak Akses Role: {{ selectedUser?.display_name }}</h3>
           <button @click="showAssignRoles=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div class="p-6 overflow-y-auto max-h-[60vh]">
-          <p class="text-xs text-slate-500 mb-4 dark:text-slate-400">Pilih hak akses role yang akan diberikan kepada pengguna ini.</p>
-          <div v-for="role in availableRoles" :key="role.id" class="flex items-center gap-3 py-2 px-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl cursor-pointer">
-            <input type="checkbox" :value="role.id" v-model="assignedRoleIds" :id="'role-'+role.id" class="rounded accent-emerald-600 w-4 h-4 cursor-pointer">
-            <label :for="'role-'+role.id" class="text-xs font-semibold cursor-pointer flex-1 dark:text-slate-200">
-              {{ role.name }} <span class="text-[11px] text-slate-400 font-normal ml-1 font-mono">({{ role.code }})</span>
-            </label>
+        <div class="p-6 overflow-y-auto max-h-[60vh] space-y-2">
+          <div v-for="role in availableRoles" :key="role.id" class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700">
+            <div>
+              <span class="block text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ role.code }}</span>
+              <span class="block text-xs text-slate-700 dark:text-slate-300">{{ role.name }}</span>
+            </div>
+            <input type="checkbox" :value="role.id" v-model="assignedRoleIds" class="rounded accent-emerald-600 h-4 w-4">
           </div>
         </div>
         <div class="modal-footer">
@@ -171,5 +169,5 @@
         </div>
       </div>
     </div>
-  </transition>
+  </transition>      
 </teleport>

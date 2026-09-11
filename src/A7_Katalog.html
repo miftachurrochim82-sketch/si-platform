@@ -15,13 +15,13 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="paginatedPermissions.length === 0">
+        <tr v-if="!(paginatedPermissions || []).length">
           <td colspan="4" class="empty-state">
             <i class="fa-solid fa-key text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Tidak ada permission yang ditemukan.</p>
           </td>
         </tr>
-        <tr v-for="perm in paginatedPermissions" :key="perm.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+        <tr v-for="perm in (paginatedPermissions || [])" :key="perm.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
           <td class="table-td font-bold text-slate-900 dark:text-white capitalize">{{ perm.resource }}</td>
           <td class="table-td text-slate-500 dark:text-slate-400"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs font-mono font-bold">{{ perm.action }}</span></td>
           <td class="table-td font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">{{ perm.code }}</td>

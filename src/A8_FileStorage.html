@@ -5,11 +5,11 @@
       <i class="fa-solid fa-filter text-slate-400 text-xs"></i>
       <select v-model="filters.files.folder_id" @change="fetchData" class="form-input bg-slate-50 dark:bg-slate-900 w-full sm:w-64">
         <option value="">Semua Folder (Root)</option>
-        <option v-for="folder in data.folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+        <option v-for="folder in (data.folders || [])" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
       </select>
     </div>
     <div class="flex gap-2 w-full sm:w-auto">
-      <button v-if="selectedFiles.length" @click="bulkDeleteFiles" class="btn btn-danger w-full sm:w-auto">
+      <button v-if="(selectedFiles || []).length" @click="bulkDeleteFiles" class="btn btn-danger w-full sm:w-auto">
         <i class="fa-solid fa-trash-can"></i> Hapus Terpilih
       </button>
       <button @click="openUploadModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20">
@@ -32,14 +32,14 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!data.files.length">
+        <tr v-if="!(data.files || []).length">
           <td colspan="6" class="empty-state">
             <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Belum ada file yang diunggah.</p>
             <button @click="openUploadModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-upload"></i> Upload File Pertama</button>
           </td>
         </tr>
-        <tr v-for="file in data.files" :key="file.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
+        <tr v-for="file in (data.files || [])" :key="file.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
           <td class="table-td text-center">
             <input type="checkbox" v-model="selectedFiles" :value="file.id" class="rounded accent-emerald-600 h-4 w-4">
           </td>
@@ -109,7 +109,7 @@
             <label class="form-label">Simpan di Direktori/Folder</label>
             <select v-model="uploadData.folder_id" class="form-input">
               <option value="">Folder Utama (Root)</option>
-              <option v-for="folder in data.folders" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
+              <option v-for="folder in (data.folders || [])" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
             </select>
           </div>
         </div>

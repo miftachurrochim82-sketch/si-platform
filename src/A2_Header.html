@@ -27,11 +27,11 @@
 
     <div class="flex items-center gap-2 pl-2">
       <div class="text-right hidden md:block">
-        <p class="text-xs font-bold text-slate-900 dark:text-white leading-tight">{{ session.user.display_name || 'Administrator' }}</p>
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 max-w-[140px] truncate" :title="session.user.email">{{ session.user.email }}</p>
+        <p class="text-xs font-bold text-slate-900 dark:text-white leading-tight">{{ (session.user && session.user.display_name) || 'Administrator' }}</p>
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 max-w-[140px] truncate" :title="(session.user && session.user.email) || ''">{{ (session.user && session.user.email) || '' }}</p>
       </div>
       <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center font-bold text-xs uppercase dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800">
-        {{ (session.user.email || 'AD').substring(0,2) }}
+        {{ ((session.user && session.user.email) || 'AD').substring(0,2) }}
       </div>
     </div>
   </div>
