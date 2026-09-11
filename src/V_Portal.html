@@ -1,4 +1,34 @@
-<!-- ==================== A4_Dashboard.html — Dashboard View ==================== -->
+<!-- ==================== V_Portal.html (Aplikasi & Dashboard) ==================== -->
+
+<!-- 1. HALAMAN: KATALOG APLIKASI -->
+<div v-if="currentPage === 'apps' && !loading" class="space-y-6">
+  <div v-if="(data.apps || []).length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div v-for="app in (data.apps || [])" :key="app.code" class="card p-5 flex flex-col gap-3 hover:shadow-md hover:border-emerald-500/30 transition-all group">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+          <i :class="app.icon || 'fa-solid fa-shapes'" class="text-xl"></i>
+        </div>
+        <div class="truncate">
+          <h3 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">{{ app.name }}</h3>
+          <p class="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ app.code }}</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 dark:text-slate-300 flex-1 leading-relaxed">{{ app.description }}</p>
+      <button 
+        @click="openApp(app)" 
+        class="btn btn-primary w-full text-xs font-bold"
+        :disabled="!app.url || app.url.includes('PASTE_APP_URL')">
+        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> Buka Aplikasi
+      </button>
+    </div>
+  </div>
+  <div v-else class="empty-state">
+    <i class="fa-solid fa-shapes text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+    <p class="text-xs font-semibold">Tidak ada aplikasi terdaftar.</p>
+  </div>
+</div>
+
+<!-- 2. HALAMAN: DASHBOARD STATISTIK -->
 <div v-if="currentPage === 'dashboard' && !loading" class="space-y-6">
   <!-- Statistik Utama -->
   <div v-if="Object.keys(dashboardStats || {}).length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -17,9 +47,8 @@
     <p class="text-xs font-semibold">Tidak ada data statistik. Muat ulang atau periksa koneksi.</p>
   </div>
 
-  <!-- Status Sistem & Ringkasan Aplikasi -->
+  <!-- Status Sistem & Ringkasan -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Status Sistem -->
     <div class="card p-5">
       <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
         <i class="fa-solid fa-heart-pulse text-rose-500"></i> Status Sistem & Server
@@ -43,7 +72,6 @@
       </div>
     </div>
 
-    <!-- Ringkasan Aplikasi -->
     <div class="card p-5">
       <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
         <i class="fa-solid fa-shapes text-emerald-600 dark:text-emerald-400"></i> Portal Aplikasi
@@ -56,7 +84,7 @@
     </div>
   </div>
 
-  <!-- Chart & Recent Logs -->
+  <!-- Tren Aktivitas & Recent Logs -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="card p-5 lg:col-span-2 flex flex-col">
       <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">

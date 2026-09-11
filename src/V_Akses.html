@@ -1,4 +1,6 @@
-<!-- ==================== A5_User.html — User Management View & Modals ==================== -->
+<!-- ==================== V_Akses.html (User, Roles & Katalog Izin) ==================== -->
+
+<!-- 1. HALAMAN: MANAJEMEN USER -->
 <div v-if="currentPage === 'users' && !loading" class="space-y-4">
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700">
     <div class="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
@@ -93,9 +95,92 @@
   </div>
 </div>
 
-<!-- ================= MODALS FOR USER MANAGEMENT ================= -->
+<!-- 2. HALAMAN: HAK AKSES & ROLES -->
+<div v-if="currentPage === 'roles' && !loading" class="space-y-4">
+  <div class="flex justify-between items-center gap-3">
+    <div class="relative w-full sm:w-64">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input v-model="roleSearch" @input="debouncedFetchRoles" placeholder="Cari role..." class="form-input pl-9 bg-slate-50 dark:bg-slate-900" />
+    </div>
+    <button @click="openCreateRoleModal" class="btn btn-primary shadow-emerald-600/20"><i class="fa-solid fa-plus"></i> Buat Role Baru</button>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" @click="sortByRole('code')">Kode Role <i class="fa-solid fa-sort text-xs ml-1"></i></th>
+          <th class="table-th cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" @click="sortByRole('name')">Nama <i class="fa-solid fa-sort text-xs ml-1"></i></th>
+          <th class="table-th">Scope</th>
+          <th class="table-th">Status</th>
+          <th class="table-th text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+        <tr v-if="!(paginatedRoles || []).length">
+          <td colspan="5" class="empty-state">
+            <i class="fa-solid fa-shield-halved text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+            <p class="text-xs font-semibold">Tidak ada role.</p>
+            <button @click="openCreateRoleModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-plus"></i> Buat Role</button>
+          </td>
+        </tr>
+        <tr v-for="role in (paginatedRoles || [])" :key="role.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
+          <td class="table-td font-mono text-xs text-emerald-700 font-bold dark:text-emerald-400">{{ role.code }}</td>
+          <td class="table-td font-bold text-slate-900 dark:text-white">{{ role.name }}</td>
+          <td class="table-td text-slate-500 dark:text-slate-400 capitalize">{{ role.scope }}</td>
+          <td class="table-td">
+            <span class="badge" :class="role.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'">{{ role.status }}</span>
+          </td>
+          <td class="table-td">
+            <div class="flex items-center justify-end gap-1.5 pr-2 sm:pr-4">
+              <button @click="openEditRoleModal(role)" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400" title="Edit Role"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
+              <button @click="openAssignPermissions(role)" class="p-2 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400" title="Kelola Izin"><i class="fa-solid fa-key text-xs"></i></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="roles" :current-page="currentPages.roles" :total-pages="totalPages.roles" @prev="prevPage('roles')" @next="nextPage('roles')" />
+  </div>
+</div>
+
+<!-- 3. HALAMAN: KATALOG PERMISSIONS -->
+<div v-if="currentPage === 'permissions' && !loading" class="space-y-4">
+  <div class="relative w-full sm:w-64">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    <input v-model="permissionSearch" @input="debouncedFetchPermissions" placeholder="Cari izin/resource..." class="form-input pl-9 bg-slate-50 dark:bg-slate-900" />
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th">Resource</th>
+          <th class="table-th">Action</th>
+          <th class="table-th">Code</th>
+          <th class="table-th">Description</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+        <tr v-if="!(paginatedPermissions || []).length">
+          <td colspan="4" class="empty-state">
+            <i class="fa-solid fa-key text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+            <p class="text-xs font-semibold">Tidak ada permission yang ditemukan.</p>
+          </td>
+        </tr>
+        <tr v-for="perm in (paginatedPermissions || [])" :key="perm.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+          <td class="table-td font-bold text-slate-900 dark:text-white capitalize">{{ perm.resource }}</td>
+          <td class="table-td text-slate-500 dark:text-slate-400"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs font-mono font-bold">{{ perm.action }}</span></td>
+          <td class="table-td font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">{{ perm.code }}</td>
+          <td class="table-td text-slate-600 dark:text-slate-300">{{ perm.description || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="permissions" :current-page="currentPages.permissions" :total-pages="totalPages.permissions" @prev="prevPage('permissions')" @next="nextPage('permissions')" />
+  </div>
+</div>
+
+<!-- ================= MODALS UNTUK MANAJEMEN AKSES ================= -->
 <teleport to="body">
-  <!-- Create/Edit User Modal -->
+  <!-- Modal User -->
   <transition name="modal">
     <div v-if="showUserModal" class="modal-overlay" @click.self="closeUserModal">
       <div class="modal-box">
@@ -143,7 +228,7 @@
     </div>
   </transition>
 
-  <!-- Assign Roles Modal -->
+  <!-- Modal Assign Roles -->
   <transition name="modal">
     <div v-if="showAssignRoles" class="modal-overlay" @click.self="showAssignRoles=false">
       <div class="modal-box">
@@ -152,7 +237,7 @@
           <button @click="showAssignRoles=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         <div class="p-6 overflow-y-auto max-h-[60vh] space-y-2">
-          <div v-for="role in availableRoles" :key="role.id" class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div v-for="role in (availableRoles || [])" :key="role.id" class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700">
             <div>
               <span class="block text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ role.code }}</span>
               <span class="block text-xs text-slate-700 dark:text-slate-300">{{ role.name }}</span>
@@ -165,6 +250,80 @@
           <button @click="saveAssignRoles" class="btn btn-primary" :disabled="assigningRoles">
             <i v-if="assigningRoles" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
             {{ assigningRoles ? 'Menyimpan...' : 'Terapkan Role' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Modal Role -->
+  <transition name="modal">
+    <div v-if="showRoleModal" class="modal-overlay" @click.self="closeRoleModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="text-base font-bold dark:text-white">{{ roleModalMode === 'create' ? 'Buat Role Baru' : 'Edit Role' }}</h3>
+          <button @click="closeRoleModal" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-4">
+          <div>
+            <label class="form-label">Kode Role (Unik)</label>
+            <input v-model="roleForm.code" class="form-input font-mono" :disabled="roleModalMode === 'edit'" placeholder="ADMIN_HR">
+            <p v-if="roleModalMode === 'create' && roleForm.code && roleForm.code.length < 2" class="text-rose-500 text-xs mt-1">Kode minimal 2 karakter.</p>
+          </div>
+          <div>
+            <label class="form-label">Nama Role</label>
+            <input v-model="roleForm.name" class="form-input" placeholder="Admin HRD">
+            <p v-if="roleForm.name && roleForm.name.length < 3" class="text-rose-500 text-xs mt-1">Nama minimal 3 karakter.</p>
+          </div>
+          <div>
+            <label class="form-label">Scope (Cakupan Akses)</label>
+            <select v-model="roleForm.scope" class="form-input">
+              <option value="global">Global (Semua Data)</option>
+              <option value="self">Self (Data Sendiri)</option>
+              <option value="group">Group (Data Tim/Grup)</option>
+            </select>
+          </div>
+          <div v-if="roleModalMode === 'edit'">
+            <label class="form-label">Status Aktif</label>
+            <select v-model="roleForm.status" class="form-input">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeRoleModal" class="btn btn-secondary">Batal</button>
+          <button @click="saveRole" class="btn btn-primary" :disabled="savingRole || !isRoleFormValid">
+            <i v-if="savingRole" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
+            {{ savingRole ? 'Menyimpan...' : 'Simpan Role' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Modal Assign Permissions -->
+  <transition name="modal">
+    <div v-if="showAssignPermissions" class="modal-overlay" @click.self="showAssignPermissions=false">
+      <div class="modal-box max-w-2xl">
+        <div class="modal-header">
+          <h3 class="text-base font-bold dark:text-white">Kelola Izin untuk: {{ selectedRole?.name || 'Role' }}</h3>
+          <button @click="showAssignPermissions=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[60vh] grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <div v-for="perm in (availablePermissions || [])" :key="perm.id" class="flex items-start gap-3 py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-xl">
+            <input type="checkbox" :value="perm.id" v-model="assignedPermissionIds" :id="'perm-'+perm.id" class="rounded mt-1 accent-emerald-600 cursor-pointer">
+            <label :for="'perm-'+perm.id" class="text-xs cursor-pointer flex-1 dark:text-slate-300">
+              <span class="block font-bold text-slate-800 dark:text-white">{{ perm.description || perm.code }}</span>
+              <span class="block text-[10px] text-slate-400 font-mono mt-0.5">{{ perm.resource }}:{{ perm.action }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showAssignPermissions=false" class="btn btn-secondary">Batal</button>
+          <button @click="saveAssignPermissions" class="btn btn-primary" :disabled="savingPermissions">
+            <i v-if="savingPermissions" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
+            {{ savingPermissions ? 'Menyimpan...' : 'Terapkan Izin' }}
           </button>
         </div>
       </div>

@@ -1,4 +1,54 @@
-<!-- ==================== A11_Pengaturan.html — Global Settings View & Modals ==================== -->
+<!-- ==================== V_Sistem.html (Audit Trail & Pengaturan Global) ==================== -->
+
+<!-- 1. HALAMAN: AUDIT TRAIL LOG -->
+<div v-if="currentPage === 'audit' && !loading" class="space-y-4">
+  <div class="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700">
+    <div class="relative flex-1 sm:w-64">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input v-model="filters.audit.search" @input="debouncedFetchAudit" placeholder="Cari pelaku atau resource..." class="form-input pl-9 bg-slate-50 dark:bg-slate-900" />
+    </div>
+    <select v-model="filters.audit.result" @change="fetchData" class="form-input sm:w-40 bg-slate-50 dark:bg-slate-900">
+      <option value="">Semua Status</option>
+      <option value="SUCCESS">Sukses (SUCCESS)</option>
+      <option value="FAILED">Gagal (FAILED)</option>
+    </select>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full">
+      <thead>
+        <tr>
+          <th class="table-th cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" @click="sortAudit('timestamp')">Waktu <i class="fa-solid fa-sort text-xs ml-1"></i></th>
+          <th class="table-th">Pelaku (Actor)</th>
+          <th class="table-th">Tindakan (Action)</th>
+          <th class="table-th">Target (Resource)</th>
+          <th class="table-th">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+        <tr v-if="!(data.auditEvents || []).length">
+          <td colspan="5" class="empty-state">
+            <i class="fa-solid fa-clipboard-list text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+            <p class="text-xs font-semibold">Tidak ada audit event.</p>
+          </td>
+        </tr>
+        <tr v-for="ev in (data.auditEvents || [])" :key="ev.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+          <td class="table-td text-slate-500 dark:text-slate-400 text-xs">{{ formatDate(ev.timestamp) }}</td>
+          <td class="table-td font-bold text-slate-900 dark:text-white">{{ ev.actor_id }}</td>
+          <td class="table-td text-slate-500 dark:text-slate-400"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-mono font-bold">{{ ev.action }}</span></td>
+          <td class="table-td text-slate-500 dark:text-slate-400">{{ ev.resource_type }} <span v-if="ev.resource_id" class="text-xs text-slate-400">#{{ ev.resource_id }}</span></td>
+          <td class="table-td">
+            <span class="badge" :class="ev.result === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' : 'bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800'">
+              <i class="mr-1 text-xs" :class="ev.result === 'SUCCESS' ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i> {{ ev.result }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls category="audit" :current-page="currentPages.audit" :total-pages="auditTotalPages" @prev="prevPage('audit')" @next="nextPage('audit')" />
+  </div>
+</div>
+
+<!-- 2. HALAMAN: PENGATURAN GLOBAL -->
 <div v-if="currentPage === 'settings' && !loading" class="space-y-4">
   <div class="card overflow-x-auto">
     <table class="min-w-full">
@@ -38,7 +88,7 @@
   </div>
 </div>
 
-<!-- ================= MODALS FOR PENGATURAN ================= -->
+<!-- ================= MODALS UNTUK PENGATURAN ================= -->
 <teleport to="body">
   <!-- Edit Setting Modal -->
   <transition name="modal">
