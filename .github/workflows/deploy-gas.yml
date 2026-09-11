@@ -33,10 +33,12 @@ jobs:
             try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
 
             const d = (parsed.tokens && parsed.tokens.default) || (parsed.token ? parsed : {});
-            const clientId = d.client_id || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientId) || '1072944905499-vm2v2i5dvn0a0d2o4ca36ilvge8cvbn0.apps.googleusercontent.com';
-            const clientSecret = d.client_secret || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientSecret) || 'v6V3fKV_zWU7iw1DrpOlRknX';
+            const clientId = d.client_id || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientId) || '';
+            const clientSecret = d.client_secret || (parsed.oauth2ClientSettings && parsed.oauth2ClientSettings.clientSecret) || '';
             const refreshToken = d.refresh_token || (parsed.token && parsed.token.refresh_token) || '';
             const accessToken = d.access_token || (parsed.token && parsed.token.access_token) || '';
+
+            const isCustom = clientId ? (!clientId.startsWith('1072944905499')) : true;
 
             const hybridAuth = {
               token: {
@@ -49,9 +51,9 @@ jobs:
               oauth2ClientSettings: {
                 clientId: clientId,
                 clientSecret: clientSecret,
-                redirectUri: 'http://localhost'
+                redirectUri: 'http://localhost:8888'
               },
-              isLocalCreds: false,
+              isLocalCreds: isCustom,
               tokens: {
                 default: {
                   client_id: clientId,
@@ -65,7 +67,7 @@ jobs:
 
             const destPath = path.join(os.homedir(), '.clasprc.json');
             fs.writeFileSync(destPath, JSON.stringify(hybridAuth, null, 2));
-            console.log('✅ .clasprc.json hybrid config written successfully to', destPath);
+            console.log('✅ .clasprc.json configured (isLocalCreds:', isCustom, ') to', destPath);
           "
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
