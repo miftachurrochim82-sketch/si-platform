@@ -723,7 +723,7 @@ function doGet(e) {
 }
 
 function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+  return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
 }
 
 // F2: token dibaca dari 3 tempat (body.token, body.data.token, ?token=) — sejajar dengan ticket.
