@@ -714,7 +714,12 @@ function listRegisteredApps_(query, context) {
 // ==================== ENTRY POINT HTTP ====================
 function doGet(e) {
   var redirect = (e && e.parameter && e.parameter.redirect) || '';
-  var html = HtmlService.createTemplateFromFile('Index');
+  var html;
+  try {
+    html = HtmlService.createTemplateFromFile('Index');
+  } catch (err) {
+    html = HtmlService.createTemplateFromFile('index');
+  }
   html.redirect = redirect;
   return html.evaluate()
     .setTitle('SI Platform - User Management')
@@ -723,7 +728,11 @@ function doGet(e) {
 }
 
 function include(filename) {
-  return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
+  try {
+    return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
+  } catch (err) {
+    return HtmlService.createTemplateFromFile(filename.toLowerCase()).evaluate().getContent();
+  }
 }
 
 // F2: token dibaca dari 3 tempat (body.token, body.data.token, ?token=) — sejajar dengan ticket.
