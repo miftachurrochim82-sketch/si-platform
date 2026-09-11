@@ -495,3 +495,10 @@ function syncUserRoles_() {
   Logger.log('Sinkronisasi user_roles selesai. Baru: ' + newRows.length + ', dilewati (role belum ada): ' + skippedNoRole);
   return newRows.length;
 }
+
+/**
+ * Alias setupApp() untuk kompatibilitas ekosistem
+ */
+function setupApp() {
+  return setup();
+}
