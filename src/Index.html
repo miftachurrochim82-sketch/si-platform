@@ -9,7 +9,7 @@
   <!-- Dark Mode Anti-Flicker Script -->
   <script>
     try {
-      if (localStorage.getItem('darkMode') === 'true') {
+      if (safeLocal.getItem('darkMode') === 'true') {
         document.documentElement.classList.add('dark');
       }
     } catch(e) {}
@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
   <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   
   <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -60,7 +60,7 @@
   </script>
 
   <!-- Shared Trenggalek Frontend CDN Token System -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.4.0/frontend/app-common.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.6.4/frontend/app-common.min.css">
 
   <!-- ==================== A0_Style.html — Styling Theme & Component Tokens ==================== -->
 <style type="text/tailwindcss">
@@ -161,6 +161,24 @@
   </div>
 
   <!-- ================= VUE 3 APPLICATION SCRIPT ================= -->
+  <!-- Safe storage (pola yang sama dengan AppCore CDN v2.6.1+): sebagian
+       browser menolak akses storage pada konteks iframe lintas-site atau
+       cookie pihak ketiga diblokir. Jatuh ke memori bila ditolak. -->
+  <script>
+    (function () {
+      function raw(kind) { try { return window[kind + 'Storage']; } catch (e) { return null; } }
+      function make(kind) {
+        var mem = {};
+        return {
+          getItem: function (k) { var s = raw(kind); if (s) { try { return s.getItem(k); } catch (e) {} } return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+          setItem: function (k, v) { mem[k] = String(v); var s = raw(kind); if (s) { try { s.setItem(k, v); } catch (e) {} } },
+          removeItem: function (k) { delete mem[k]; var s = raw(kind); if (s) { try { s.removeItem(k); } catch (e) {} } }
+        };
+      }
+      window.safeSession = make('session');
+      window.safeLocal = make('local');
+    })();
+  </script>
   <script>
     const { createApp } = Vue;
 
@@ -169,7 +187,7 @@
         // Helper untuk parsing JSON dari sessionStorage dengan aman
         const parseStoredUser = () => {
           try {
-            const raw = sessionStorage.getItem('platform_user');
+            const raw = safeSession.getItem('platform_user');
             return raw ? JSON.parse(raw) : null;
           } catch (e) {
             console.warn('Gagal parse platform_user dari sessionStorage:', e);
@@ -180,7 +198,7 @@
         return {
           // PERBAIKAN: Baca dari sessionStorage jika ada, agar tahan dari Refresh (F5)
           session: {
-            token: sessionStorage.getItem('platform_token') || null,
+            token: safeSession.getItem('platform_token') || null,
             user: parseStoredUser()
           },
 
@@ -190,7 +208,7 @@
 
           sidebarCollapsed: window.innerWidth < 768,
           isMobile: window.innerWidth < 768,
-          isDarkMode: localStorage.getItem('darkMode') === 'true',
+          isDarkMode: safeLocal.getItem('darkMode') === 'true',
           toasts: [],
           showConfirm: false,
           confirmMessage: '',
@@ -509,16 +527,16 @@
 
         // Tangkap parameter redirect yang dikirim dari backend (doGet)
         if (this.redirectParam) {
-          sessionStorage.setItem('platform_redirect', this.redirectParam);
+          safeSession.setItem('platform_redirect', this.redirectParam);
         }
 
         // Jika sesi sudah tersimpan (refresh halaman), langsung arahkan ke halaman yang diminta
         if (this.session.token && this.session.user) {
-          const redirect = sessionStorage.getItem('platform_redirect');
+          const redirect = safeSession.getItem('platform_redirect');
           const targetPage = redirect || 'apps';
           this.switchPage(targetPage);
           this.fetchData(true); // muat data dengan loading overlay
-          sessionStorage.removeItem('platform_redirect'); // bersihkan setelah dipakai
+          safeSession.removeItem('platform_redirect'); // bersihkan setelah dipakai
         }
       },
       
@@ -548,7 +566,7 @@
         toggleDarkMode() {
           this.isDarkMode = !this.isDarkMode;
           document.documentElement.classList.toggle('dark', this.isDarkMode);
-          localStorage.setItem('darkMode', this.isDarkMode);
+          safeLocal.setItem('darkMode', this.isDarkMode);
           this.updateChart();
         },
         showToast(message, type = 'success') {
@@ -710,16 +728,16 @@
               this.session.user = result.data.user;
               if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
               
-              sessionStorage.setItem('platform_token', this.session.token);
-              sessionStorage.setItem('platform_user', JSON.stringify(this.session.user));
+              safeSession.setItem('platform_token', this.session.token);
+              safeSession.setItem('platform_user', JSON.stringify(this.session.user));
 
               this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
 
               // ==== REDIRECT SETELAH LOGIN ====
-              const redirect = sessionStorage.getItem('platform_redirect');
+              const redirect = safeSession.getItem('platform_redirect');
               if (redirect) {
                 this.switchPage(redirect, true);
-                sessionStorage.removeItem('platform_redirect');
+                safeSession.removeItem('platform_redirect');
               } else {
                 this.switchPage('apps', true);
               }
@@ -748,16 +766,16 @@
               this.session.user = result.data.user;
               if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
 
-              sessionStorage.setItem('platform_token', this.session.token);
-              sessionStorage.setItem('platform_user', JSON.stringify(this.session.user));
+              safeSession.setItem('platform_token', this.session.token);
+              safeSession.setItem('platform_user', JSON.stringify(this.session.user));
 
               this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
 
               // ==== REDIRECT SETELAH LOGIN ====
-              const redirect = sessionStorage.getItem('platform_redirect');
+              const redirect = safeSession.getItem('platform_redirect');
               if (redirect) {
                 this.switchPage(redirect, true);
-                sessionStorage.removeItem('platform_redirect');
+                safeSession.removeItem('platform_redirect');
               } else {
                 this.switchPage('apps', true);
               }
@@ -779,8 +797,8 @@
           }
           this.session.token = null; 
           this.session.user = null;
-          sessionStorage.removeItem('platform_token');
-          sessionStorage.removeItem('platform_user');
+          safeSession.removeItem('platform_token');
+          safeSession.removeItem('platform_user');
         },
 
         switchPage(pageKey, forceReload = false) {
@@ -1237,5 +1255,5 @@
 
     app.mount('#app');
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3b7bdb2db72ea77',t:'MTc4OTQ3NjQ1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
