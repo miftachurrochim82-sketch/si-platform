@@ -25,8 +25,7 @@ window.SIPlatformHelpers = {
           this.isDarkMode = !this.isDarkMode;
           document.documentElement.classList.toggle('dark', this.isDarkMode);
           safeLocal.setItem('darkMode', this.isDarkMode);
-          this.updateChart();
-        },
+          },
         showToast(message, type = 'success') {
           const id = Date.now() + Math.random();
           this.toasts.push({ id, message, type });
@@ -74,9 +73,6 @@ window.SIPlatformHelpers = {
           this.currentPage = pageKey;
           if (this.isMobile) this.sidebarCollapsed = true;
           this.fetchData(forceReload);
-          if (pageKey === 'dashboard') {
-            this.$nextTick(() => { this.updateChart(); });
-          }
         },
         toggleSidebar() { this.sidebarCollapsed = !this.sidebarCollapsed; },
 
@@ -85,6 +81,17 @@ window.SIPlatformHelpers = {
         sortAudit(key) { if (this.sortAuditKey === key) this.sortAuditOrder = this.sortAuditOrder === 'asc' ? 'desc' : 'asc'; else { this.sortAuditKey = key; this.sortAuditOrder = 'desc'; } this.currentPages.audit = 1; this.fetchData(); },
         sortByRole(key) { if (this.sortRoleKey === key) this.sortRoleOrder = this.sortRoleOrder === 'asc' ? 'desc' : 'asc'; else { this.sortRoleKey = key; this.sortRoleOrder = 'asc'; } },
 
+        goToPage(cat, p) {
+          const serverSide = { users: 'userTotalPages', files: 'fileTotalPages', audit: 'auditTotalPages', settings: 'settingTotalPages', notifications: 'notificationTotalPages' };
+          if (Object.prototype.hasOwnProperty.call(serverSide, cat)) {
+            const total = Math.max(1, Number(this[serverSide[cat]]) || 1);
+            const np = Math.min(Math.max(1, p), total);
+            if (np !== this.currentPages[cat]) { this.currentPages[cat] = np; this.fetchData(); }
+            return;
+          }
+          const totalC = Math.max(1, this.totalPages[cat] || 1);
+          this.currentPages[cat] = Math.min(Math.max(1, p), totalC);
+        },
         nextPage(cat) {
           const serverSideTotals = { users: this.userTotalPages, files: this.fileTotalPages, audit: this.auditTotalPages, settings: this.settingTotalPages, notifications: this.notificationTotalPages };
           if (Object.prototype.hasOwnProperty.call(serverSideTotals, cat)) {
@@ -106,31 +113,6 @@ window.SIPlatformHelpers = {
         // --- CRUD OPERATIONS ---
         toggleAllUsers(e) { this.selectedUsers = e.target.checked ? this.data.users.map(u => u.id) : []; },
         toggleAllFiles(e) { this.selectedFiles = e.target.checked ? this.data.files.map(f => f.id) : []; },
-        updateChart() {
-          if (this.currentPage !== 'dashboard') return;
-          const canvas = document.getElementById('dashboardChart');
-          if (!canvas) return;
-          if (this.chartInstance) { this.chartInstance.destroy(); }
-          const fallbackData = {
-            labels: ['Belum Ada Data'],
-            datasets: [{ label: 'Menunggu Server...', data: [0], borderColor: '#cbd5e1', fill: false }]
-          };
-          const chartData = this.dashboardStats.chartData || this.dashboardStats.chart_data || fallbackData;
-          this.chartInstance = new Chart(canvas, {
-            type: 'line',
-            data: chartData,
-            options: { 
-              responsive: true, 
-              maintainAspectRatio: false,
-              interaction: { mode: 'index', intersect: false },
-              plugins: { legend: { position: 'bottom', labels: { color: this.isDarkMode ? '#e2e8f0' : '#475569' } } },
-              scales: {
-                y: { beginAtZero: true, grid: { borderDash: [4, 4], color: this.isDarkMode ? '#334155' : '#e2e8f0' }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } }
-              }
-            }
-          });
-        }
   }
 };
 </script>
