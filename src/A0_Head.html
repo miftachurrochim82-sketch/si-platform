@@ -1,0 +1,38 @@
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SI Platform - Admin Console Terpadu</title>
+
+  <!-- Dark Mode Anti-Flicker Script -->
+  <script>
+    try {
+      if (safeLocal.getItem('darkMode') === 'true') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch(e) {}
+  </script>
+
+  <!-- Fonts & CDN Dependencies -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6.5.2 Pro/Free icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3.5.42/dist/vue.global.prod.js"></script>
+
+  <!-- Tailwind: hasil compile statis di A0_Tw (Track D) — Play CDN pensiun -->
+
+  <!-- Shared Trenggalek Frontend CDN Token System -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.7.5/frontend/app-common.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.7.5/frontend/app-components.min.js"></script>
+
+  <!-- ==================== A0_Tw.html — Tailwind Compiled + Component Tokens ==================== -->
+<?!= include('A0_Tw'); ?>
