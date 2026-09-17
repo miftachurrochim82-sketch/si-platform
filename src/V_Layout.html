@@ -215,7 +215,6 @@
 
       
       <!-- ================= 1. MODUL: PORTAL & DASHBOARD ================= -->
-
 <!-- ==================== V_Portal.html (Aplikasi & Dashboard) ==================== -->
 
 <!-- 1. HALAMAN: KATALOG APLIKASI -->
@@ -345,6 +344,7 @@
   </div>
 </div>
 
+
       <!-- ================= 2. MODUL: MANAJEMEN AKSES & USER ================= -->
 <!-- ==================== V_Akses.html (User, Roles & Katalog Izin) ==================== -->
 
@@ -439,7 +439,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="users" :current-page="currentPages.users" :total-pages="userTotalPages" @prev="prevPage('users')" @next="nextPage('users')" />
+    <pagination-controls category="users" :current-page="currentPages.users" :total-pages="userTotalPages" @prev="prevPage('users')" @next="nextPage('users')"></pagination-controls>
   </div>
 </div>
 
@@ -487,7 +487,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="roles" :current-page="currentPages.roles" :total-pages="totalPages.roles" @prev="prevPage('roles')" @next="nextPage('roles')" />
+    <pagination-controls category="roles" :current-page="currentPages.roles" :total-pages="totalPages.roles" @prev="prevPage('roles')" @next="nextPage('roles')"></pagination-controls>
   </div>
 </div>
 
@@ -522,7 +522,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="permissions" :current-page="currentPages.permissions" :total-pages="totalPages.permissions" @prev="prevPage('permissions')" @next="nextPage('permissions')" />
+    <pagination-controls category="permissions" :current-page="currentPages.permissions" :total-pages="totalPages.permissions" @prev="prevPage('permissions')" @next="nextPage('permissions')"></pagination-controls>
   </div>
 </div>
 
@@ -679,6 +679,7 @@
   </transition>      
 </teleport>
 
+
       <!-- ================= 3. MODUL: STORAGE & NOTIFIKASI ================= -->
 <!-- ==================== V_Layanan.html (File Storage & Notifikasi) ==================== -->
 
@@ -749,7 +750,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="files" :current-page="currentPages.files" :total-pages="fileTotalPages" @prev="prevPage('files')" @next="nextPage('files')" />
+    <pagination-controls category="files" :current-page="currentPages.files" :total-pages="fileTotalPages" @prev="prevPage('files')" @next="nextPage('files')"></pagination-controls>
   </div>
 </div>
 
@@ -794,7 +795,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="notifications" :current-page="currentPages.notifications" :total-pages="notificationTotalPages" @prev="prevPage('notifications')" @next="nextPage('notifications')" />
+    <pagination-controls category="notifications" :current-page="currentPages.notifications" :total-pages="notificationTotalPages" @prev="prevPage('notifications')" @next="nextPage('notifications')"></pagination-controls>
   </div>
 
   <div class="mt-8">
@@ -826,7 +827,7 @@
           </tr>
         </tbody>
       </table>
-      <pagination-controls category="templates" :current-page="currentPages.templates" :total-pages="totalPages.templates" @prev="prevPage('templates')" @next="nextPage('templates')" />
+      <pagination-controls category="templates" :current-page="currentPages.templates" :total-pages="totalPages.templates" @prev="prevPage('templates')" @next="nextPage('templates')"></pagination-controls>
     </div>
   </div>
 </div>
@@ -983,8 +984,8 @@
   </transition>      
 </teleport>
 
-      <!-- ================= 4. MODUL: AUDIT & PENGATURAN GLOBAL ================= -->
 
+      <!-- ================= 4. MODUL: AUDIT & PENGATURAN GLOBAL ================= -->
 <!-- ==================== V_Sistem.html (Audit Trail & Pengaturan Global) ==================== -->
 
 <!-- 1. HALAMAN: AUDIT TRAIL LOG -->
@@ -1031,7 +1032,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="audit" :current-page="currentPages.audit" :total-pages="auditTotalPages" @prev="prevPage('audit')" @next="nextPage('audit')" />
+    <pagination-controls category="audit" :current-page="currentPages.audit" :total-pages="auditTotalPages" @prev="prevPage('audit')" @next="nextPage('audit')"></pagination-controls>
   </div>
 </div>
 
@@ -1071,7 +1072,7 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls category="settings" :current-page="currentPages.settings" :total-pages="settingTotalPages" @prev="prevPage('settings')" @next="nextPage('settings')" />
+    <pagination-controls category="settings" :current-page="currentPages.settings" :total-pages="settingTotalPages" @prev="prevPage('settings')" @next="nextPage('settings')"></pagination-controls>
   </div>
 </div>
 
@@ -1132,6 +1133,8 @@
     </div>
   </transition>      
 </teleport>
+
+
 
     </div>
   </main>
