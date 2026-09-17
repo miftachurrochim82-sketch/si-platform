@@ -3,6 +3,45 @@
 // SI-PLATFORM - J_State.html
 // State + Computed untuk seluruh Vue App
 // ============================================================
+// Safe storage (pola sama dgn AppCore CDN v2.6.1+): sebagian browser menolak akses
+// storage pada iframe lintas-site / cookie pihak ketiga diblokir; jatuh ke memori.
+// Helper storage direstorasi 2026-09-17 (tertinggal saat refactor 6-modul);
+// implementasi kanonik rawStorage+makeSafeStorage dari frontend-cdn app-core.js.
+// ============================================================
+(function () {
+  function rawStorage(kind) {
+    try { return window[kind + 'Storage']; } catch (e) { return null; }
+  }
+  function makeSafeStorage(kind) {
+    var mem = {};
+    return {
+      getItem: function (key) {
+        var store = rawStorage(kind);
+        if (store) {
+          try { return store.getItem(key); } catch (e) { /* jatuh ke memori */ }
+        }
+        return Object.prototype.hasOwnProperty.call(mem, key) ? mem[key] : null;
+      },
+      setItem: function (key, value) {
+        mem[key] = String(value);
+        var store = rawStorage(kind);
+        if (store) {
+          try { store.setItem(key, value); } catch (e) { /* memori saja */ }
+        }
+      },
+      removeItem: function (key) {
+        delete mem[key];
+        var store = rawStorage(kind);
+        if (store) {
+          try { store.removeItem(key); } catch (e) { /* memori saja */ }
+        }
+      }
+    };
+  }
+  window.safeSession = makeSafeStorage('session');
+  window.safeLocal = makeSafeStorage('local');
+})();
+
 window.SIPlatformState = {
       data() {
         // Helper untuk parsing JSON dari sessionStorage dengan aman
@@ -25,7 +64,7 @@ window.SIPlatformState = {
 
           // Tampilan awal setelah login adalah halaman Aplikasi
           currentPage: 'apps',
-          redirectParam: '<?!= redirect ?>',
+          redirectParam: window.__REDIRECT_PARAM__ || '',
 
           sidebarCollapsed: window.innerWidth < 768,
           isMobile: window.innerWidth < 768,
@@ -133,15 +172,14 @@ window.SIPlatformState = {
             totalNotifications: 'Notifikasi',
             totalAuditEvents: 'Log Sistem'
           },
-          chartInstance: null,
 
           filters: {
             users: { search: '', status: '' },
             files: { folder_id: '' },
             audit: { search: '', result: '' }
           },
-          roleSearch: '',
-          permissionSearch: '',
+          roleFilters: { q: '' },
+          permFilters: { q: '' },
 
           loading: false,
           errorMessage: '',
@@ -229,6 +267,25 @@ window.SIPlatformState = {
       },
 
       computed: {
+    platformBrand() { return { title: 'SI-PLATFORM', subtitle: 'Pemkab Trenggalek', logoChar: 'SP', logoIcon: 'fa-solid fa-shield-halved' }; },
+    menuForKit() { return (this.menuGroups || []).map(function (g) { return { name: g.title, items: (g.items || []).map(function (i) { return { id: i.key, label: i.label, icon: i.icon }; }) }; }); },
+    pageIconsKit() { var m = {}; (this.menuItems || []).forEach(function (i) { m[i.key] = i.icon; }); return m; },
+    chartLabels() { var c = this.dashboardStats && (this.dashboardStats.chartData || this.dashboardStats.chart_data); return (c && c.labels) || []; },
+    chartDatasets() { var c = this.dashboardStats && (this.dashboardStats.chartData || this.dashboardStats.chart_data); return (c && c.datasets) || []; },
+    userFilterDefs() { return [
+      { key: 'search', label: 'Cari', type: 'text', placeholder: 'Nama / email / NIP' },
+      { key: 'status', label: 'Status', type: 'select', options: [ { value: 'active', label: 'Aktif' }, { value: 'inactive', label: 'Nonaktif' } ] }
+    ]; },
+    auditFilterDefs() { return [
+      { key: 'search', label: 'Cari', type: 'text', placeholder: 'Pelaku atau resource' },
+      { key: 'result', label: 'Hasil', type: 'select', options: [ { value: 'SUCCESS', label: 'Sukses' }, { value: 'FAILED', label: 'Gagal' } ] }
+    ]; },
+    filesFilterDefs() { return [
+      { key: 'folder_id', label: 'Folder', type: 'select', options: (this.data.folders || []).map(function (f) { return { value: f.id, label: f.name }; }) }
+    ]; },
+    roleFilterDefs() { return [ { key: 'q', label: 'Cari Role', type: 'text', placeholder: 'Nama / kode role' } ]; },
+    permFilterDefs() { return [ { key: 'q', label: 'Cari Izin', type: 'text', placeholder: 'Nama / resource izin' } ]; },
+    statColorMap() { return { totalUsers: 'sky', totalRoles: 'purple', totalPermissions: 'amber', totalFiles: 'emerald', totalNotifications: 'rose', totalAuditEvents: 'sky' }; },
         currentPageLabel() {
           const item = this.menuItems.find(m => m.key === this.currentPage);
           return item ? item.label : '';
