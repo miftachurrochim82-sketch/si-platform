@@ -50,7 +50,7 @@ function createTestTicketSIKINERJA() {
   return createTestTicket_('SIKINERJA');
 }
 function createTestTicketSIUJI() { return createTestTicket_('SIUJI'); }
-function createTestTicketSIPENGAWASAN() { return createTestTicket_('SIKOMPETENSI'); }
+function createTestTicketSIPENGAWASAN() { return createTestTicket_('SIPENGAWASAN'); }
 function createTestTicketSILAHAR() { return createTestTicket_('SILAHAR'); }
 
 // T2: cek tiket via SHEET (bukan cache — cache tiket tidak pernah ditulis sistem).
