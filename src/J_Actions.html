@@ -5,6 +5,12 @@
 // ============================================================
 window.SIPlatformActions = {
   methods: {
+    onCloseMobile() { if (this.isMobile) this.sidebarCollapsed = true; },
+    onUsersFilterChange() { this.currentPages.users = 1; this.debouncedFetch(); },
+    onAuditFilterChange() { this.currentPages.audit = 1; this.debouncedFetchAudit(); },
+    onFilesFilterChange() { this.currentPages.files = 1; this.fetchData(); },
+    onRolesFilterChange() { this.currentPages.roles = 1; this.debouncedFetchRoles(); },
+    onPermFilterChange() { this.currentPages.permissions = 1; this.debouncedFetchPermissions(); },
         async openApp(app) {
           if (!app.url || app.url.includes('PASTE_APP_URL')) {
             this.showToast('URL aplikasi belum diatur oleh Administrator', 'warning');
