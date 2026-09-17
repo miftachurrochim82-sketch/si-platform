@@ -1,0 +1,137 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_Helpers.html
+// Utilitas murni & UI (format, sort, toast, navigasi, chart)
+// ============================================================
+window.SIPlatformHelpers = {
+  methods: {
+        handleResize() { 
+          this.isMobile = window.innerWidth < 768;
+          if(this.isMobile && this.session.token) {
+             this.sidebarCollapsed = true;
+          } else if (!this.isMobile && this.session.token) {
+             this.sidebarCollapsed = false;
+          }
+        },
+        handleKeydown(e) {
+          if (e.key === 'Escape') {
+            this.showUserModal = false; this.showUploadModal = false; this.showConfirm = false;
+            this.showAssignRoles = false; this.showEditSetting = false; this.showSettingHistory = false;
+            this.showSendNotificationModal = false; this.showAssignPermissions = false;
+            this.showRoleModal = false; this.showTemplateModal = false;
+          }
+        },
+        toggleDarkMode() {
+          this.isDarkMode = !this.isDarkMode;
+          document.documentElement.classList.toggle('dark', this.isDarkMode);
+          safeLocal.setItem('darkMode', this.isDarkMode);
+          this.updateChart();
+        },
+        showToast(message, type = 'success') {
+          const id = Date.now() + Math.random();
+          this.toasts.push({ id, message, type });
+          setTimeout(() => this.removeToast(id), 4000);
+        },
+        removeToast(id) { this.toasts = this.toasts.filter(t => t.id !== id); },
+        askConfirm(message, action) {
+          this.confirmMessage = message; this.confirmAction = action; this.showConfirm = true;
+        },
+        async executeConfirm() {
+          const action = this.confirmAction;
+          this.showConfirm = false; this.confirmAction = null;
+          if (action) {
+            try { await action(); } catch (e) { this.showToast(e?.message || e, 'error'); }
+          }
+        },
+        confirmLogout() { this.askConfirm('Apakah Anda yakin ingin keluar dari aplikasi?', () => { this.logout(); }); },
+        
+        formatDate(value) {
+          if (!value) return '-';
+          const date = new Date(value);
+          return isNaN(date) ? String(value) : date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+        formatBytes(bytes) {
+          const size = Number(bytes);
+          if (!Number.isFinite(size) || size < 0) return '-';
+          if (size === 0) return '0 B';
+          const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+          const i = Math.min(Math.floor(Math.log(size) / Math.log(1024)), sizes.length - 1);
+          return (size / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2) + ' ' + sizes[i];
+        },
+        folderName(folderId) {
+          const folder = this.data.folders.find(f => String(f.id) === String(folderId));
+          return folder ? folder.name : 'Root';
+        },
+        getInitials(text) {
+          const str = String(text || '').trim();
+          return str ? str.substring(0, 2).toUpperCase() : 'US';
+        },
+
+        // =========================================================================
+        // SSO REDIRECT: BUKA APLIKASI DI TAB BARU
+        // =========================================================================
+        switchPage(pageKey, forceReload = false) {
+          this.currentPage = pageKey;
+          if (this.isMobile) this.sidebarCollapsed = true;
+          this.fetchData(forceReload);
+          if (pageKey === 'dashboard') {
+            this.$nextTick(() => { this.updateChart(); });
+          }
+        },
+        toggleSidebar() { this.sidebarCollapsed = !this.sidebarCollapsed; },
+
+        sortBy(key) { if (this.sort.key === key) this.sort.order = this.sort.order === 'asc' ? 'desc' : 'asc'; else { this.sort.key = key; this.sort.order = 'asc'; } this.currentPages.users = 1; this.fetchData(); },
+        sortFiles(key) { if (this.sortFilesKey === key) this.sortFilesOrder = this.sortFilesOrder === 'asc' ? 'desc' : 'asc'; else { this.sortFilesKey = key; this.sortFilesOrder = 'asc'; } this.currentPages.files = 1; this.fetchData(); },
+        sortAudit(key) { if (this.sortAuditKey === key) this.sortAuditOrder = this.sortAuditOrder === 'asc' ? 'desc' : 'asc'; else { this.sortAuditKey = key; this.sortAuditOrder = 'desc'; } this.currentPages.audit = 1; this.fetchData(); },
+        sortByRole(key) { if (this.sortRoleKey === key) this.sortRoleOrder = this.sortRoleOrder === 'asc' ? 'desc' : 'asc'; else { this.sortRoleKey = key; this.sortRoleOrder = 'asc'; } },
+
+        nextPage(cat) {
+          const serverSideTotals = { users: this.userTotalPages, files: this.fileTotalPages, audit: this.auditTotalPages, settings: this.settingTotalPages, notifications: this.notificationTotalPages };
+          if (Object.prototype.hasOwnProperty.call(serverSideTotals, cat)) {
+            const total = Math.max(1, Number(serverSideTotals[cat]) || 1);
+            if (this.currentPages[cat] < total) { this.currentPages[cat]++; this.fetchData(); }
+            return;
+          }
+          if (this.currentPages[cat] < (this.totalPages[cat] || 1)) { this.currentPages[cat]++; }
+        },
+        prevPage(cat) {
+          const serverSideTotals = { users: this.userTotalPages, files: this.fileTotalPages, audit: this.auditTotalPages, settings: this.settingTotalPages, notifications: this.notificationTotalPages };
+          if (Object.prototype.hasOwnProperty.call(serverSideTotals, cat)) {
+            if (this.currentPages[cat] > 1) { this.currentPages[cat]--; this.fetchData(); }
+            return;
+          }
+          if (this.currentPages[cat] > 1) { this.currentPages[cat]--; }
+        },
+
+        // --- CRUD OPERATIONS ---
+        toggleAllUsers(e) { this.selectedUsers = e.target.checked ? this.data.users.map(u => u.id) : []; },
+        toggleAllFiles(e) { this.selectedFiles = e.target.checked ? this.data.files.map(f => f.id) : []; },
+        updateChart() {
+          if (this.currentPage !== 'dashboard') return;
+          const canvas = document.getElementById('dashboardChart');
+          if (!canvas) return;
+          if (this.chartInstance) { this.chartInstance.destroy(); }
+          const fallbackData = {
+            labels: ['Belum Ada Data'],
+            datasets: [{ label: 'Menunggu Server...', data: [0], borderColor: '#cbd5e1', fill: false }]
+          };
+          const chartData = this.dashboardStats.chartData || this.dashboardStats.chart_data || fallbackData;
+          this.chartInstance = new Chart(canvas, {
+            type: 'line',
+            data: chartData,
+            options: { 
+              responsive: true, 
+              maintainAspectRatio: false,
+              interaction: { mode: 'index', intersect: false },
+              plugins: { legend: { position: 'bottom', labels: { color: this.isDarkMode ? '#e2e8f0' : '#475569' } } },
+              scales: {
+                y: { beginAtZero: true, grid: { borderDash: [4, 4], color: this.isDarkMode ? '#334155' : '#e2e8f0' }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' } }
+              }
+            }
+          });
+        }
+  }
+};
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c503f52dcf5d0f',t:'MTc4OTYxNTY1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>

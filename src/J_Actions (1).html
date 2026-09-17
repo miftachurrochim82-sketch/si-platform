@@ -1,0 +1,237 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_Actions.html
+// Aksi user: CRUD, modal, upload, notifikasi, template
+// ============================================================
+window.SIPlatformActions = {
+  methods: {
+        async openApp(app) {
+          if (!app.url || app.url.includes('PASTE_APP_URL')) {
+            this.showToast('URL aplikasi belum diatur oleh Administrator', 'warning');
+            return;
+          }
+
+          this.showToast(`Menghubungkan ke ${app.name}...`, 'success');
+
+          try {
+            const res = await this.callServer('POST', '/api/v1/auth/create-ticket', {
+              userId: this.session.user.id,
+              appCode: app.code
+            });
+
+            if (res.success && res.data && res.data.ticket) {
+              const cleanUrl = String(app.url || '').replace(/^[+\s]+|[+\s]+$/g, '').trim();
+              const sep = cleanUrl.includes('?') ? '&' : '?';
+              const targetUrl = cleanUrl + sep + 'ticket=' + encodeURIComponent(res.data.ticket);
+              window.open(targetUrl, '_blank');
+            } else {
+              throw new Error(res.error?.message || 'Gagal membuat tiket keamanan.');
+            }
+          } catch (e) {
+            this.showToast(e.message, 'error');
+          }
+        },
+
+        async saveUser() {
+          this.savingUser = true;
+          try {
+            const method = this.userModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.userModalMode === 'create' ? '/api/v1/users' : `/api/v1/users/${this.editingUserId}`;
+            const result = await this.callServer(method, path, this.userForm);
+            if (result.success) { this.showToast('Data pengguna berhasil disimpan!'); this.closeUserModal(); this.loadedPages['users'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingUser = false; }
+        },
+        deleteUser(id) {
+          this.askConfirm('Nonaktifkan pengguna ini secara permanen?', async () => {
+            const result = await this.callServer('DELETE', `/api/v1/users/${id}`);
+            if (result.success) { this.showToast('Pengguna telah dinonaktifkan'); this.loadedPages['users'] = false; this.fetchData(true); } else throw new Error(result.error?.message || 'Gagal');
+          });
+        },
+        bulkDeleteUsers() {
+          if (!this.selectedUsers.length) return;
+          this.askConfirm(`Nonaktifkan ${this.selectedUsers.length} pengguna terpilih?`, async () => {
+            for (const id of this.selectedUsers) await this.callServer('DELETE', `/api/v1/users/${id}`);
+            this.showToast('Pengguna terpilih berhasil dinonaktifkan'); this.selectedUsers = []; this.loadedPages['users'] = false; this.fetchData(true);
+          });
+        },
+        openCreateUserModal() {
+          this.userModalMode = 'create';
+          this.userForm = { username: '', email: '', display_name: '', password: '', status: 'active' };
+          this.editingUserId = null;
+          this.showUserModal = true;
+        },
+
+        openEditUserModal(user) {
+          this.userModalMode = 'edit';
+          this.userForm = {
+            username: user.username,
+            email: user.email,
+            display_name: user.display_name,
+            status: user.status || 'active',
+            password: '' // tidak dipakai saat edit
+          };
+          this.editingUserId = user.id;
+          this.showUserModal = true;
+        },
+
+        closeUserModal() { this.showUserModal = false; this.savingUser = false; },
+        async openAssignRoles(user) {
+          this.selectedUser = user; this.showAssignRoles = true; this.assigningRoles = false;
+          try {
+            const res = await this.callServer('GET', '/api/v1/roles');
+            if (res.success) {
+              this.availableRoles = res.data || [];
+              const userRoleCodes = Array.isArray(user.roles) ? user.roles : [];
+              this.assignedRoleIds = this.availableRoles.filter(r => userRoleCodes.includes(r.code)).map(r => r.id);
+            } else throw new Error(res.error?.message || 'Gagal memuat data roles');
+          } catch (e) { this.showToast(e.message, 'error'); this.showAssignRoles = false; }
+        },
+        async saveAssignRoles() {
+          this.assigningRoles = true;
+          try {
+            const res = await this.callServer('POST', `/api/v1/users/${this.selectedUser.id}/roles`, { role_ids: this.assignedRoleIds });
+            if (res.success) { this.showAssignRoles = false; this.showToast('Perubahan role diterapkan'); this.loadedPages['users'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal menerapkan role');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.assigningRoles = false; }
+        },
+
+        openCreateRoleModal() { this.roleModalMode = 'create'; this.roleForm = { code: '', name: '', scope: 'global', status: 'active' }; this.editingRoleId = null; this.showRoleModal = true; },
+        openEditRoleModal(role) { this.roleModalMode = 'edit'; this.roleForm = { code: role.code, name: role.name, scope: role.scope, status: role.status }; this.editingRoleId = role.id; this.showRoleModal = true; },
+        closeRoleModal() { this.showRoleModal = false; this.savingRole = false; },
+        async saveRole() {
+          this.savingRole = true;
+          try {
+            const method = this.roleModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.roleModalMode === 'create' ? '/api/v1/roles' : `/api/v1/roles/${this.editingRoleId}`;
+            const payload = this.roleModalMode === 'create' ? { code: this.roleForm.code, name: this.roleForm.name, scope: this.roleForm.scope } : { name: this.roleForm.name, scope: this.roleForm.scope, status: this.roleForm.status };
+            const result = await this.callServer(method, path, payload);
+            if (result.success) { this.showToast('Role berhasil disimpan!'); this.closeRoleModal(); this.loadedPages['roles'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingRole = false; }
+        },
+        async openAssignPermissions(role) {
+          this.selectedRole = role; this.showAssignPermissions = true; this.savingPermissions = false;
+          try {
+            const res = await this.callServer('GET', '/api/v1/permissions');
+            if (res.success) {
+              this.availablePermissions = res.data || [];
+              if (role) {
+                const rolePerms = role.permissions || [];
+                this.assignedPermissionIds = this.availablePermissions.filter(p => rolePerms.includes(p.code)).map(p => p.id);
+              } else this.assignedPermissionIds = [];
+            } else throw new Error(res.error?.message || 'Gagal memuat daftar izin');
+          } catch (e) { this.showToast(e.message, 'error'); this.showAssignPermissions = false; }
+        },
+        async saveAssignPermissions() {
+          if (!this.selectedRole) return;
+          this.savingPermissions = true;
+          try {
+            const res = await this.callServer('POST', `/api/v1/roles/${this.selectedRole.id}/permissions`, { permission_ids: this.assignedPermissionIds });
+            if (res.success) { this.showAssignPermissions = false; this.showToast('Izin akses berhasil diperbarui'); this.loadedPages['roles'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingPermissions = false; }
+        },
+
+        openUploadModal() { this.showUploadModal = true; this.uploadData = { file_name: '', mime_type: '', data_base64: '', folder_id: '', file_size: 0 }; this.$nextTick(() => { if (this.$refs.fileInput) this.$refs.fileInput.value = ''; }); },
+        onFileSelected(e) { const file = e.target.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { this.showToast('Ukuran file tidak boleh lebih dari 10MB!', 'error'); e.target.value = ''; return; } this.processFile(file); },
+        handleDrop(e) { const file = e.dataTransfer.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { this.showToast('Ukuran file tidak boleh lebih dari 10MB!', 'error'); return; } this.processFile(file); },
+        processFile(file) {
+          this.uploadData.file_size = file.size;
+          const reader = new FileReader();
+          reader.onload = (e) => { this.uploadData.file_name = file.name; this.uploadData.mime_type = file.type || 'application/octet-stream'; this.uploadData.data_base64 = e.target.result.split(',')[1]; };
+          reader.onerror = () => this.showToast('Gagal membaca file dari sistem', 'error');
+          reader.readAsDataURL(file);
+        },
+        async uploadFile() {
+          this.uploading = true;
+          try {
+            const res = await this.callServer('POST', '/api/v1/files', this.uploadData);
+            if (res.success) { this.showUploadModal = false; this.showToast('File berhasil diunggah'); this.loadedPages['files'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Upload dibatalkan karena kesalahan sistem');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.uploading = false; }
+        },
+        deleteFile(fileId) {
+          this.askConfirm('Hapus file ini permanen?', async () => {
+            const res = await this.callServer('DELETE', `/api/v1/files/${fileId}`);
+            if (res.success) { this.showToast('File dihapus'); this.loadedPages['files'] = false; this.fetchData(true); } else throw new Error(res.error?.message || 'Gagal hapus');
+          });
+        },
+        bulkDeleteFiles() {
+          if (!this.selectedFiles.length) return;
+          this.askConfirm(`Hapus permanen ${this.selectedFiles.length} file terpilih?`, async () => {
+            for (const id of this.selectedFiles) await this.callServer('DELETE', `/api/v1/files/${id}`);
+            this.showToast('Proses hapus massal selesai'); this.selectedFiles = []; this.loadedPages['files'] = false; this.fetchData(true);
+          });
+        },
+
+        openEditSetting(setting) {
+          this.selectedSetting = setting;
+          try {
+            const value = typeof setting.value_json === 'string' ? JSON.parse(setting.value_json) : setting.value_json;
+            this.editSettingValue = JSON.stringify(value ?? null, null, 2);
+          } catch (_) { this.editSettingValue = String(setting.value_json ?? ''); }
+          this.showEditSetting = true;
+        },
+        async saveSetting() {
+          this.savingSetting = true;
+          try {
+            const parsed = JSON.parse(this.editSettingValue);
+            const res = await this.callServer('PATCH', `/api/v1/settings/${this.selectedSetting.key}`, { value: parsed });
+            if (res.success) { this.showEditSetting = false; this.showToast('Konfigurasi sistem berhasil diperbarui'); this.loadedPages['settings'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal');
+          } catch (e) { this.showToast(e.message + ' (Pastikan format JSON valid)', 'error'); } finally { this.savingSetting = false; }
+        },
+        async openSettingHistory(key) {
+          try {
+            const res = await this.callServer('GET', `/api/v1/settings/${key}/history`);
+            if (res.success) { this.selectedSetting = res.data.setting; this.settingHistory = res.data.versions || []; this.showSettingHistory = true; } 
+            else throw new Error(res.error?.message || 'Gagal mengambil riwayat');
+          } catch (e) { this.showToast(e.message, 'error'); }
+        },
+
+        openSendNotificationModal() { this.showSendNotificationModal = true; this.notificationForm = { template_code: '', subject: '', body: '', recipients: '', channel: 'email' }; this.notificationVariables = {}; this.sendingNotification = false; },
+        onTemplateChange() {
+          this.notificationVariables = {};
+          const tpl = this.data.notificationTemplates.find(t => t.code === this.notificationForm.template_code);
+          if (tpl) {
+            this.notificationForm.subject = tpl.subject || this.notificationForm.subject;
+            this.notificationForm.body = tpl.body_template || this.notificationForm.body;
+          }
+        },
+        async sendNotification() {
+          const recipients = this.notificationForm.recipients.split(',').map(s => s.trim()).filter(s => s);
+          if (!recipients.length) { this.showToast('Penerima (Recipients) wajib diisi', 'warning'); return; }
+          this.sendingNotification = true;
+          try {
+            const payload = {
+              template_code: this.notificationForm.template_code || undefined,
+              subject: this.notificationForm.subject,
+              body: this.notificationForm.body,
+              channel: this.notificationForm.channel,
+              recipients: recipients.map(r => ({ type: this.notificationForm.channel, value: r })),
+              variables: this.notificationVariables
+            };
+            const res = await this.callServer('POST', '/api/v1/notifications', payload);
+            if (res.success) { this.showSendNotificationModal = false; this.showToast('Notifikasi berhasil dimasukkan ke antrean kirim'); this.loadedPages['notifications'] = false; this.fetchData(true); } 
+            else throw new Error(res.error?.message || 'Gagal mengirim pesan');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.sendingNotification = false; }
+        },
+        openCreateTemplateModal() { this.templateModalMode = 'create'; this.templateForm = { code: '', name: '', channel: 'email', subject: '', body_template: '', variables: '' }; this.editingTemplateId = null; this.showTemplateModal = true; },
+        openEditTemplateModal(tpl) { this.templateModalMode = 'edit'; this.templateForm = { code: tpl.code, name: tpl.name, channel: tpl.channel, subject: tpl.subject || '', body_template: tpl.body_template || '', variables: tpl.variables || '' }; this.editingTemplateId = tpl.id; this.showTemplateModal = true; },
+        closeTemplateModal() { this.showTemplateModal = false; this.savingTemplate = false; },
+        async saveTemplate() {
+          this.savingTemplate = true;
+          try {
+            const method = this.templateModalMode === 'create' ? 'POST' : 'PATCH';
+            const path = this.templateModalMode === 'create' ? '/api/v1/notification-templates' : `/api/v1/notification-templates/${this.editingTemplateId}`;
+            const result = await this.callServer(method, path, this.templateForm);
+            if (result.success) { this.showToast('Template berhasil disimpan!'); this.closeTemplateModal(); this.loadedPages['notifications'] = false; this.fetchData(true); } 
+            else throw new Error(result.error?.message || 'Gagal menyimpan template');
+          } catch (e) { this.showToast(e.message, 'error'); } finally { this.savingTemplate = false; }
+        },
+
+  }
+};
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c502d10a6e5d0f',t:'MTc4OTYxNTYwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>

@@ -1,0 +1,65 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_Export.html
+// Ekspor & unduh (CSV, file)
+// ============================================================
+window.SIPlatformExport = {
+  methods: {
+        exportCSV(page) {
+          let data = []; let filename = '';
+          if (page === 'users') { data = this.data.users; filename = 'users_export.csv'; }
+          else if (page === 'audit') { data = this.data.auditEvents; filename = 'audit_logs_export.csv'; }
+          else if (page === 'files') { data = this.data.files; filename = 'files_export.csv'; }
+          else if (page === 'roles') { data = this.data.roles; filename = 'roles_export.csv'; }
+          else if (page === 'permissions') { data = this.data.permissions; filename = 'permissions_export.csv'; }
+          else if (page === 'settings') { data = this.data.settings; filename = 'settings_export.csv'; }
+          else if (page === 'notifications') { data = this.data.notifications; filename = 'notifications_export.csv'; }
+
+          if (!data.length) { this.showToast('Tidak ada data untuk diekspor.', 'warning'); return; }
+          const headers = Object.keys(data[0]);
+          const csvRows = [headers.join(',')];
+          data.forEach(row => {
+            const values = headers.map(h => {
+              const val = row[h] ?? '';
+              return `"${String(val).replace(/"/g, '""')}"`;
+            });
+            csvRows.push(values.join(','));
+          });
+          const csvString = csvRows.join('\n');
+          const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        },
+
+        async downloadFile(fileId) {
+          try {
+            const res = await this.callServer('GET', `/api/v1/files/${fileId}/download`);
+            if (res.success && res.data?.data_base64) {
+              const byteCharacters = atob(res.data.data_base64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: res.data.mime_type || 'application/octet-stream' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = res.data.file_name || 'download';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              this.showToast('File berhasil diunduh', 'success');
+            } else {
+              throw new Error('Data file tidak tersedia');
+            }
+          } catch (e) { this.showToast(e.message, 'error'); }
+        },
+  }
+};
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c503ace9335d0f',t:'MTc4OTYxNTYzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>

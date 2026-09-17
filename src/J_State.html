@@ -1,0 +1,345 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_State.html
+// State + Computed untuk seluruh Vue App
+// ============================================================
+window.SIPlatformState = {
+      data() {
+        // Helper untuk parsing JSON dari sessionStorage dengan aman
+        const parseStoredUser = () => {
+          try {
+            const raw = safeSession.getItem('platform_user');
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            console.warn('Gagal parse platform_user dari sessionStorage:', e);
+            return null;
+          }
+        };
+
+        return {
+          // PERBAIKAN: Baca dari sessionStorage jika ada, agar tahan dari Refresh (F5)
+          session: {
+            token: safeSession.getItem('platform_token') || null,
+            user: parseStoredUser()
+          },
+
+          // Tampilan awal setelah login adalah halaman Aplikasi
+          currentPage: 'apps',
+          redirectParam: '<?!= redirect ?>',
+
+          sidebarCollapsed: window.innerWidth < 768,
+          isMobile: window.innerWidth < 768,
+          isDarkMode: safeLocal.getItem('darkMode') === 'true',
+          toasts: [],
+          showConfirm: false,
+          confirmMessage: '',
+          confirmAction: null,
+
+          // Form login manual (username/email + password)
+          loginForm: {
+            identifier: '',
+            password: ''
+          },
+
+          menuItems: [
+            { key: 'apps', label: 'Aplikasi', icon: 'fa-solid fa-shapes', permission: 'application.read' },            
+            { key: 'dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high', permission: 'dashboard.read' },
+            { key: 'users', label: 'Manajemen User', icon: 'fa-solid fa-users-gear', permission: 'user.read' },
+            { key: 'roles', label: 'Hak Akses & Roles', icon: 'fa-solid fa-shield-halved', permission: 'role.read' },
+            { key: 'permissions', label: 'Katalog Izin', icon: 'fa-solid fa-key', permission: 'permission.read' },
+            { key: 'files', label: 'File Storage', icon: 'fa-solid fa-folder-open', permission: 'file.read' },
+            { key: 'notifications', label: 'Notifikasi Sistem', icon: 'fa-solid fa-bell', permission: 'notification.read' },
+            { key: 'audit', label: 'Audit & Log', icon: 'fa-solid fa-clipboard-list', permission: 'audit.read' },
+            { key: 'settings', label: 'Pengaturan Global', icon: 'fa-solid fa-gear', permission: 'setting.read' }
+          ],
+
+          menuGroups: [
+            {
+              title: 'Portal & Utama',
+              items: [
+                { key: 'apps', label: 'Katalog Aplikasi', icon: 'fa-solid fa-shapes', permission: 'application.read' },
+                { key: 'dashboard', label: 'Dashboard Global', icon: 'fa-solid fa-gauge-high', permission: 'dashboard.read' }
+              ]
+            },
+            {
+              title: 'Pengguna & Akses',
+              items: [
+                { key: 'users', label: 'Manajemen User', icon: 'fa-solid fa-users-gear', permission: 'user.read' },
+                { key: 'roles', label: 'Hak Akses & Roles', icon: 'fa-solid fa-shield-halved', permission: 'role.read' },
+                { key: 'permissions', label: 'Katalog Izin', icon: 'fa-solid fa-key', permission: 'permission.read' }
+              ]
+            },
+            {
+              title: 'Storage & Layanan',
+              items: [
+                { key: 'files', label: 'File Storage', icon: 'fa-solid fa-folder-open', permission: 'file.read' },
+                { key: 'notifications', label: 'Notifikasi Sistem', icon: 'fa-solid fa-bell', permission: 'notification.read' }
+              ]
+            },
+            {
+              title: 'Tata Kelola & Sistem',
+              items: [
+                { key: 'audit', label: 'Audit Trail & Log', icon: 'fa-solid fa-clipboard-list', permission: 'audit.read' },
+                { key: 'settings', label: 'Pengaturan Global', icon: 'fa-solid fa-gear', permission: 'setting.read' }
+              ]
+            }
+          ],
+
+          data: {
+            users: [],
+            roles: [],
+            permissions: [],
+            auditEvents: [],
+            settings: [],
+            files: [],
+            folders: [],
+            notifications: [],
+            notificationTemplates: [],
+            apps: []
+          },
+
+          dashboardStats: {},
+          healthStatus: {},
+
+          statIcons: {
+            totalUsers: 'fa-solid fa-users',
+            totalRoles: 'fa-solid fa-shield-halved',
+            totalPermissions: 'fa-solid fa-key',
+            totalFiles: 'fa-solid fa-folder-open',
+            totalNotifications: 'fa-solid fa-bell',
+            totalAuditEvents: 'fa-solid fa-clipboard-list'
+          },
+          statColors: {
+            totalUsers: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+            totalRoles: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
+            totalPermissions: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+            totalFiles: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
+            totalNotifications: 'bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-400',
+            totalAuditEvents: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+          },
+          statBorderColors: {
+            totalUsers: 'border-blue-500',
+            totalRoles: 'border-purple-500',
+            totalPermissions: 'border-amber-500',
+            totalFiles: 'border-green-500',
+            totalNotifications: 'border-pink-500',
+            totalAuditEvents: 'border-slate-500'
+          },
+          statLabels: {
+            totalUsers: 'Pengguna Aktif',
+            totalRoles: 'Roles Sistem',
+            totalPermissions: 'Izin Akses',
+            totalFiles: 'Dokumen',
+            totalNotifications: 'Notifikasi',
+            totalAuditEvents: 'Log Sistem'
+          },
+          chartInstance: null,
+
+          filters: {
+            users: { search: '', status: '' },
+            files: { folder_id: '' },
+            audit: { search: '', result: '' }
+          },
+          roleSearch: '',
+          permissionSearch: '',
+
+          loading: false,
+          errorMessage: '',
+          loginError: '',
+          loginLoading: false,
+
+          loadedPages: {},
+          isSyncing: false,
+
+          showUserModal: false,
+          userModalMode: 'create',
+          userForm: { username: '', email: '', display_name: '', password: '', status: 'active' },
+          editingUserId: null,
+          savingUser: false,
+
+          showAssignRoles: false,
+          selectedUser: null,
+          availableRoles: [],
+          assignedRoleIds: [],
+          assigningRoles: false,
+
+          showUploadModal: false,
+          uploadData: { file_name: '', mime_type: '', data_base64: '', folder_id: '', file_size: 0 },
+          uploading: false,
+
+          showEditSetting: false,
+          selectedSetting: null,
+          editSettingValue: '',
+          savingSetting: false,
+          showSettingHistory: false,
+          settingHistory: [],
+
+          showSendNotificationModal: false,
+          notificationForm: { template_code: '', subject: '', body: '', recipients: '', channel: 'email' },
+          notificationVariables: {},
+          sendingNotification: false,
+
+          showTemplateModal: false,
+          templateModalMode: 'create',
+          templateForm: { code: '', name: '', channel: 'email', subject: '', body_template: '', variables: '' },
+          editingTemplateId: null,
+          savingTemplate: false,
+
+          showAssignPermissions: false,
+          selectedRole: null,
+          availablePermissions: [],
+          assignedPermissionIds: [],
+          savingPermissions: false,
+
+          showRoleModal: false,
+          roleModalMode: 'create',
+          roleForm: { code: '', name: '', scope: 'global', status: 'active' },
+          editingRoleId: null,
+          savingRole: false,
+
+          selectedUsers: [],
+          selectedFiles: [],
+          sort: { key: '', order: 'asc' },
+          sortFilesKey: '',
+          sortFilesOrder: 'asc',
+          sortAuditKey: '',
+          sortAuditOrder: 'desc',
+          sortRoleKey: '',
+          sortRoleOrder: 'asc',
+
+          _debounceTimer: null,
+          pageSize: 10,
+          currentPages: {
+            users: 1,
+            roles: 1,
+            permissions: 1,
+            audit: 1,
+            settings: 1,
+            files: 1,
+            notifications: 1,
+            templates: 1
+          },
+          fetchId: 0,
+          auditTotalPages: 1,
+          userTotalPages: 1,
+          fileTotalPages: 1,
+          notificationTotalPages: 1,
+          settingTotalPages: 1
+        };
+      },
+
+      computed: {
+        currentPageLabel() {
+          const item = this.menuItems.find(m => m.key === this.currentPage);
+          return item ? item.label : '';
+        },
+        currentMenuIcon() {
+          const item = this.menuItems.find(m => m.key === this.currentPage);
+          return item ? item.icon : 'fa-solid fa-file';
+        },
+        allowedMenuItems() {
+          const perms = this.session.user?.permissions;
+          if (!Array.isArray(perms) || perms.length === 0) {
+            return [];
+          }
+          return this.menuItems.filter(item => perms.includes(item.permission));
+        },
+        allowedMenuGroups() {
+          const perms = this.session.user?.permissions;
+          if (!Array.isArray(perms) || perms.length === 0) {
+            return [];
+          }
+          return (this.menuGroups || []).map(group => ({
+            title: group.title,
+            items: (group.items || []).filter(item => perms.includes(item.permission))
+          })).filter(group => group.items.length > 0);
+        },
+        displayableStats() {
+          const { chartData, recentLogs, chart_data, recent_logs, ...numericStats } = this.dashboardStats || {};
+          return numericStats;
+        },
+        templateVariables() {
+          const tpl = this.data.notificationTemplates.find(t => t.code === this.notificationForm.template_code);
+          if (!tpl || !tpl.variables) return [];
+          return tpl.variables.split(',').map(v => v.trim()).filter(Boolean);
+        },
+        notificationPreview() {
+          let body = this.notificationForm.body;
+          if (!body) return '';
+          this.templateVariables.forEach(v => {
+            const regex = new RegExp('\\{\\{\\s*' + v + '\\s*\\}\\}', 'gi');
+            body = body.replace(regex, this.notificationVariables[v] || '');
+          });
+          return body;
+        },
+        isUserFormValid() {
+          if (this.userModalMode === 'create') {
+            return (this.userForm.username?.length || 0) >= 3 && (this.userForm.email?.includes('@') || false) && (this.userForm.display_name?.length || 0) >= 3;
+          }
+          return (this.userForm.email?.includes('@') || false) && (this.userForm.display_name?.length || 0) >= 3;
+        },
+        isRoleFormValid() {
+          if (this.roleModalMode === 'create') return (this.roleForm.code?.length || 0) >= 2 && (this.roleForm.name?.length || 0) >= 3;
+          return (this.roleForm.name?.length || 0) >= 3;
+        },
+        isTemplateFormValid() {
+          return (this.templateForm.code?.length || 0) >= 2 && (this.templateForm.name?.length || 0) >= 3;
+        },
+        allUsersSelected() {
+          return (this.data.users?.length || 0) > 0 && this.selectedUsers.length === this.data.users.length;
+        },
+        allFilesSelected() {
+          return (this.data.files?.length || 0) > 0 && this.selectedFiles.length === this.data.files.length;
+        },
+        sortedRoles() {
+          const arr = this.data.roles || [];
+          if (!this.sortRoleKey) return arr;
+          const key = this.sortRoleKey;
+          const order = this.sortRoleOrder === 'asc' ? 1 : -1;
+          return [...arr].sort((a, b) => {
+            let va = a[key] || '';
+            let vb = b[key] || '';
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            return va > vb ? order : va < vb ? -order : 0;
+          });
+        },
+        paginatedRoles() {
+          const arr = this.sortedRoles || [];
+          const start = (this.currentPages.roles - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedPermissions() {
+          const arr = this.data.permissions || [];
+          const start = (this.currentPages.permissions - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedTemplates() {
+          const arr = this.data.notificationTemplates || [];
+          const start = (this.currentPages.templates - 1) * this.pageSize;
+          return arr.slice(start, start + this.pageSize);
+        },
+        paginatedSettings() {
+          return Array.isArray(this.data.settings) ? this.data.settings : [];
+        },
+        paginatedNotifications() {
+          return Array.isArray(this.data.notifications) ? this.data.notifications : [];
+        },
+        totalPages() {
+          const clientPages = (arr) => Math.max(1, Math.ceil((arr?.length || 0) / this.pageSize));
+          return {
+            users: Math.max(1, Number(this.userTotalPages) || 1),
+            files: Math.max(1, Number(this.fileTotalPages) || 1),
+            audit: Math.max(1, Number(this.auditTotalPages) || 1),
+            settings: Math.max(1, Number(this.settingTotalPages) || 1),
+            notifications: Math.max(1, Number(this.notificationTotalPages) || 1),
+            roles: clientPages(this.sortedRoles),
+            permissions: clientPages(this.data.permissions),
+            templates: clientPages(this.data.notificationTemplates)
+          };
+        }
+      },
+
+};
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c5044c6eac5d0f',t:'MTc4OTYxNTY2NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>

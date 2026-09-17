@@ -1,0 +1,284 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_Api.html
+// Komunikasi server (callServer), loader data, autentikasi
+// ============================================================
+window.SIPlatformApi = {
+  methods: {
+        callServer(method, path, data = {}, query = {}, includeToken = true) {
+          return new Promise((resolve, reject) => {
+            // Mekanisme Mock Server (Untuk test di luar GAS)
+            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+              setTimeout(() => {
+                if (path === '/api/v1/auth/login') {
+                  // Mock login: jika identifier/password dikirim, anggap sukses
+                  resolve({ success: true, data: { token: 'dummy_token', user: { email: this.loginForm.identifier || 'admin@si-platform.dev', display_name: 'Administrator', permissions: ['audit.read', 'user.read', 'role.read', 'permission.read', 'file.read', 'notification.read', 'setting.read', 'application.read', 'dashboard.read'] } } });
+                } else if (path === '/api/v1/dashboard/stats') {
+                  resolve({ success: true, data: { totalUsers: 45, totalRoles: 6, totalPermissions: 32, totalFiles: 128, totalNotifications: 54, totalAuditEvents: 1042, chartData: { labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'], datasets: [{ label: 'Aktivitas', data: [12, 19, 15, 25, 22, 30, 28], borderColor: '#10b981', fill: false }] }, recentLogs: [{ id: 101, action: 'LOGIN', resource_type: 'Auth', actor_id: 'admin@si-platform.dev', result: 'SUCCESS', timestamp: new Date().toISOString() }] } });
+                } else if (path === '/api/v1/users') {
+                  resolve({ success: true, data: [{ id: 1, username: 'admin', email: 'admin@si-platform.dev', display_name: 'Administrator', status: 'active', roles: ['admin'] }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/roles') {
+                  resolve({ success: true, data: [{ id: 1, code: 'admin', name: 'Super Administrator', scope: 'global', status: 'active', permissions: ['user.read'] }] });
+                } else if (path === '/api/v1/permissions') {
+                  resolve({ success: true, data: [{ id: 1, resource: 'user', action: 'create', code: 'user.create', description: 'Membuat user' }] });
+                } else if (path === '/api/v1/files') {
+                  resolve({ success: true, data: [{ id: 1, original_name: 'Dokumen.pdf', folder_id: null, size: 2048576, created_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/folders') {
+                  resolve({ success: true, data: [{ id: 10, name: 'Laporan Keuangan' }] });
+                } else if (path === '/api/v1/notifications') {
+                  resolve({ success: true, data: [{ id: 1, subject: 'Welcome', status: 'sent', channel: 'email', created_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/notification-templates') {
+                  resolve({ success: true, data: [{ id: 1, code: 'welcome_user', name: 'Email Welcome', channel: 'email', subject: 'Welcome' }] });
+                } else if (path === '/api/v1/settings') {
+                  resolve({ success: true, data: [{ id: 1, key: 'APP_CONFIG', value_json: '{"theme":"light"}', version: 3, updated_by: 'admin', updated_at: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else if (path === '/api/v1/audit/events') {
+                  resolve({ success: true, data: [{ id: 1, action: 'LOGIN', resource_type: 'Auth', actor_id: 'admin', result: 'SUCCESS', timestamp: new Date().toISOString() }], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } });
+                } else {
+                  resolve({ success: true, data: [] });
+                }
+              }, 400);
+              return;
+            }
+
+            const payload = { ...data };
+            if (includeToken && this.session.token) payload.token = this.session.token;
+
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler((err) => {
+                const message = err?.message || String(err) || 'Unknown error';
+                if (this.session.token && /token|unauthor|auth/i.test(message)) {
+                  this.logout();
+                  this.showToast('Sesi berakhir, silakan login kembali.', 'warning');
+                }
+                reject(new Error(message));
+              })
+              .callApi(method, path, payload, query);
+          });
+        },
+
+        async fetchData(forceReload = false) {
+          const fetchId = ++this.fetchId;
+          const pageKey = this.currentPage;
+          const hasCache = this.loadedPages[pageKey] === true;
+          const showBlockingLoading = forceReload || !hasCache;
+          this.loading = showBlockingLoading;
+          this.isSyncing = !showBlockingLoading;
+          this.errorMessage = '';
+
+          try {
+            switch (this.currentPage) {
+              case 'dashboard': {
+                const [statsRes, appsRes, healthRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/dashboard/stats'),
+                  this.callServer('GET', '/api/v1/apps'),
+                  this.callServer('GET', '/api/v1/health')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (statsRes.success) {
+                    this.dashboardStats = statsRes.data || {};
+                    this.$nextTick(() => { this.updateChart(); });
+                  }
+                  if (appsRes.success) this.data.apps = appsRes.data || [];
+                  if (healthRes.success) this.healthStatus = healthRes.data || {};
+                }
+                break;
+              }
+              case 'apps': {
+                const res = await this.callServer('GET', '/api/v1/apps');
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.apps = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat daftar aplikasi.';
+                }
+                break;
+              }
+              case 'users': {
+                const res = await this.callServer('GET', '/api/v1/users', {}, {
+                  search: this.filters.users.search,
+                  status: this.filters.users.status,
+                  page: this.currentPages.users,
+                  pageSize: this.pageSize,
+                  sortBy: this.sort.key,
+                  sortOrder: this.sort.order
+                });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.users = res.data || []; this.userTotalPages = res.meta?.totalPages || 1; this.selectedUsers = []; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat pengguna.';
+                }
+                break;
+              }
+              case 'roles': {
+                const res = await this.callServer('GET', '/api/v1/roles', {}, { search: this.roleSearch });
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.roles = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat roles.';
+                }
+                break;
+              }
+              case 'permissions': {
+                const res = await this.callServer('GET', '/api/v1/permissions', {}, { search: this.permissionSearch });
+                if (fetchId === this.fetchId) {
+                  if (res.success) this.data.permissions = res.data || [];
+                  else this.errorMessage = res.error?.message || 'Gagal memuat permissions.';
+                }
+                break;
+              }
+              case 'audit': {
+                const res = await this.callServer('GET', '/api/v1/audit/events', {}, {
+                  page: this.currentPages.audit,
+                  pageSize: this.pageSize,
+                  search: this.filters.audit.search,
+                  result: this.filters.audit.result,
+                  sortBy: this.sortAuditKey,
+                  sortOrder: this.sortAuditOrder
+                });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.auditEvents = res.data || []; this.auditTotalPages = res.meta?.totalPages || 1; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat log audit.';
+                }
+                break;
+              }
+              case 'settings': {
+                const res = await this.callServer('GET', '/api/v1/settings', {}, { page: this.currentPages.settings, pageSize: this.pageSize });
+                if (fetchId === this.fetchId) {
+                  if (res.success) { this.data.settings = res.data || []; this.settingTotalPages = res.meta?.totalPages || 1; } 
+                  else this.errorMessage = res.error?.message || 'Gagal memuat pengaturan.';
+                }
+                break;
+              }
+              case 'files': {
+                const [fRes, dRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/files', {}, {
+                    folder_id: this.filters.files.folder_id,
+                    page: this.currentPages.files,
+                    pageSize: this.pageSize,
+                    sortBy: this.sortFilesKey,
+                    sortOrder: this.sortFilesOrder
+                  }),
+                  this.callServer('GET', '/api/v1/folders')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (fRes.success) { this.data.files = fRes.data || []; this.fileTotalPages = fRes.meta?.totalPages || 1; } 
+                  else this.errorMessage = fRes.error?.message || 'Gagal memuat berkas.';
+                  if (dRes.success) this.data.folders = dRes.data || [];
+                }
+                break;
+              }
+              case 'notifications': {
+                const [nRes, tRes] = await Promise.all([
+                  this.callServer('GET', '/api/v1/notifications', {}, { page: this.currentPages.notifications, pageSize: this.pageSize }),
+                  this.callServer('GET', '/api/v1/notification-templates')
+                ]);
+                if (fetchId === this.fetchId) {
+                  if (nRes.success) { this.data.notifications = nRes.data || []; this.notificationTotalPages = nRes.meta?.totalPages || 1; } 
+                  else this.errorMessage = nRes.error?.message || 'Gagal memuat notifikasi.';
+                  if (tRes.success) this.data.notificationTemplates = tRes.data || [];
+                }
+                break;
+              }
+            }
+
+            if (fetchId === this.fetchId && !this.errorMessage) {
+              this.loadedPages[pageKey] = true;
+            }
+
+          } catch (e) {
+            if (fetchId === this.fetchId) this.errorMessage = 'Terjadi galat sistem: ' + e.message;
+          } finally {
+            if (fetchId === this.fetchId) {
+              this.loading = false;
+              this.isSyncing = false;
+            }
+          }
+        },
+
+        debouncedFetch() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.currentPages.users = 1; this.fetchData(); }, 500); },
+        debouncedFetchAudit() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.currentPages.audit = 1; this.fetchData(); }, 500); },
+        debouncedFetchRoles() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.fetchData(); }, 500); },
+        debouncedFetchPermissions() { clearTimeout(this._debounceTimer); this._debounceTimer = setTimeout(() => { this.fetchData(); }, 500); },
+
+        async login() {
+          this.loginLoading = true;
+          this.loginError = '';
+          try {
+            const result = await this.callServer('POST', '/api/v1/auth/login', {}, {}, false);
+            if (result?.success && result.data?.token && result.data?.user) {
+              this.session.token = result.data.token;
+              this.session.user = result.data.user;
+              if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
+              
+              safeSession.setItem('platform_token', this.session.token);
+              safeSession.setItem('platform_user', JSON.stringify(this.session.user));
+
+              this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
+
+              // ==== REDIRECT SETELAH LOGIN ====
+              const redirect = safeSession.getItem('platform_redirect');
+              if (redirect) {
+                this.switchPage(redirect, true);
+                safeSession.removeItem('platform_redirect');
+              } else {
+                this.switchPage('apps', true);
+              }
+            } else {
+              this.loginError = result?.error?.message || 'Gagal masuk. Pastikan Anda sudah login dengan akun Google yang terdaftar.';
+            }
+          } catch (e) {
+            this.loginError = 'Terjadi kesalahan: ' + e.message;
+          } finally {
+            this.loginLoading = false;
+          }
+        },
+
+        // Method untuk login manual (username/email + password)
+        async loginWithPassword() {
+          this.loginLoading = true;
+          this.loginError = '';
+          try {
+            const payload = {
+              identifier: this.loginForm.identifier,
+              password: this.loginForm.password
+            };
+            const result = await this.callServer('POST', '/api/v1/auth/login', payload, {}, false);
+            if (result?.success && result.data?.token && result.data?.user) {
+              this.session.token = result.data.token;
+              this.session.user = result.data.user;
+              if (!Array.isArray(this.session.user.permissions)) this.session.user.permissions = [];
+
+              safeSession.setItem('platform_token', this.session.token);
+              safeSession.setItem('platform_user', JSON.stringify(this.session.user));
+
+              this.showToast(`Selamat datang, ${this.session.user.display_name}!`, 'success');
+
+              // ==== REDIRECT SETELAH LOGIN ====
+              const redirect = safeSession.getItem('platform_redirect');
+              if (redirect) {
+                this.switchPage(redirect, true);
+                safeSession.removeItem('platform_redirect');
+              } else {
+                this.switchPage('apps', true);
+              }
+            } else {
+              this.loginError = result?.error?.message || 'Login gagal. Periksa kembali kredensial Anda.';
+            }
+          } catch (e) {
+            this.loginError = 'Terjadi kesalahan: ' + e.message;
+          } finally {
+            this.loginLoading = false;
+          }
+        },
+
+        async logout() {
+          if (this.session.token) { 
+            try { await this.callServer('POST', '/api/v1/auth/logout'); } catch (e) {} 
+          }
+          this.session.token = null; 
+          this.session.user = null;
+          safeSession.removeItem('platform_token');
+          safeSession.removeItem('platform_user');
+        },
+
+  }
+};
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c503418fd35d0f',t:'MTc4OTYxNTYyMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>

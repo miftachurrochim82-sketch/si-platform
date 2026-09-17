@@ -1,0 +1,75 @@
+<script>
+// ============================================================
+// SI-PLATFORM - J_App.html
+// Bootstrap: rakitan mixin + component + mount
+// ============================================================
+const { createApp } = Vue;
+
+const SIPlatformMixin = {
+  data() { return Object.assign({}, window.SIPlatformState.data()); },
+  computed: Object.assign({}, window.SIPlatformState.computed),
+  methods: Object.assign(
+    {},
+    window.SIPlatformHelpers.methods,
+    window.SIPlatformApi.methods,
+    window.SIPlatformActions.methods,
+    window.SIPlatformExport.methods
+  )
+};
+
+const app = createApp(Object.assign({}, SIPlatformMixin, {
+      mounted() {
+        document.documentElement.classList.toggle('dark', this.isDarkMode);
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('keydown', this.handleKeydown);
+        this.handleResize();
+
+        // Tangkap parameter redirect yang dikirim dari backend (doGet)
+        if (this.redirectParam) {
+          safeSession.setItem('platform_redirect', this.redirectParam);
+        }
+
+        // Jika sesi sudah tersimpan (refresh halaman), langsung arahkan ke halaman yang diminta
+        if (this.session.token && this.session.user) {
+          const redirect = safeSession.getItem('platform_redirect');
+          const targetPage = redirect || 'apps';
+          this.switchPage(targetPage);
+          this.fetchData(true); // muat data dengan loading overlay
+          safeSession.removeItem('platform_redirect'); // bersihkan setelah dipakai
+        }
+      },
+      
+      beforeUnmount() {
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('keydown', this.handleKeydown);
+        if (this.chartInstance) this.chartInstance.destroy();
+      },
+
+}));
+    app.component('pagination-controls', {
+      props: {
+        category: String,
+        currentPage: Number,
+        totalPages: Number
+      },
+      emits: ['prev', 'next'],
+      template: `
+        <div class="px-4 py-3 border-t border-slate-200 dark:border-gray-700 flex items-center justify-between bg-slate-50/50 dark:bg-gray-800/50">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Halaman <span class="text-slate-900 dark:text-white font-semibold">{{ currentPage }}</span> dari <span class="text-slate-900 dark:text-white font-semibold">{{ totalPages }}</span>
+          </span>
+          <div class="flex gap-2">
+            <button @click="$emit('prev')" :disabled="currentPage === 1" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-chevron-left text-xs"></i> Prev
+            </button>
+            <button @click="$emit('next')" :disabled="currentPage >= totalPages" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
+              Next <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `
+    });
+
+    app.mount('#app');
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c50373bfff5d0f',t:'MTc4OTYxNTYyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
