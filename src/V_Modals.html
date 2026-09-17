@@ -1,0 +1,32 @@
+    <teleport to="body">
+
+      <!-- Confirm Dialog -->
+      <app-modal
+        :show="showConfirm"
+        title="Konfirmasi Tindakan"
+        icon="fa-solid fa-triangle-exclamation"
+        size="sm"
+        confirm-text="Ya, Lanjutkan"
+        confirm-class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition"
+        @close="showConfirm = false; confirmAction = null"
+        @confirm="executeConfirm">
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed text-center">{{ confirmMessage }}</p>
+      </app-modal>
+
+    </teleport>
+
+    <!-- Toast -->
+    <teleport to="body">
+      <div class="fixed bottom-4 md:bottom-auto md:top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] md:w-full pointer-events-none">
+        <transition-group name="toast">
+          <div v-for="toast in toasts" :key="toast.id" class="pointer-events-auto shadow-xl rounded-xl p-4 flex items-start justify-between border-l-4 bg-white text-slate-800 dark:bg-gray-800 dark:text-slate-200"
+               :class="{'border-emerald-500': toast.type === 'success', 'border-rose-500': toast.type === 'error', 'border-amber-500': toast.type === 'warning'}">
+            <div class="flex items-center gap-3">
+              <i :class="{'fa-solid fa-circle-check text-emerald-500': toast.type === 'success', 'fa-solid fa-circle-xmark text-rose-500': toast.type === 'error', 'fa-solid fa-triangle-exclamation text-amber-500': toast.type === 'warning'}" class="text-xl drop-shadow-sm"></i>
+              <span class="text-sm font-medium leading-tight">{{ toast.message }}</span>
+            </div>
+            <button type="button" @click="removeToast(toast.id)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors ml-4"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </transition-group>
+      </div>
+    </teleport>
