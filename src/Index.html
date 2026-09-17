@@ -1,169 +1,31 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SI Platform - Admin Console Terpadu</title>
-
-  <!-- Dark Mode Anti-Flicker Script -->
-  <script>
-    try {
-      if (safeLocal.getItem('darkMode') === 'true') {
-        document.documentElement.classList.add('dark');
-      }
-    } catch(e) {}
-  </script>
-
-  <!-- Fonts & CDN Dependencies -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Font Awesome 6.5.2 Pro/Free icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  
-  <!-- Vue 3 -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-
-  <!-- Tailwind CSS CDN & Konfigurasi Tema -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
-              950: '#022c22'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    };
-  </script>
-
-  <!-- Shared Trenggalek Frontend CDN Token System -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/miftachurrochim82-sketch/frontend-cdn@v2.6.5/frontend/app-common.min.css">
-
-  <!-- ==================== A0_Style.html — Styling Theme & Component Tokens ==================== -->
-<style type="text/tailwindcss">
-  @layer components {
-    .btn {
-      @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
-    }
-    .btn-primary { @apply bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20 focus:ring-emerald-500 active:scale-[0.98]; }
-    .btn-secondary { @apply bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 focus:ring-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 active:scale-[0.98]; }
-    .btn-danger { @apply bg-rose-600 text-white hover:bg-rose-700 shadow-rose-600/20 focus:ring-rose-500 active:scale-[0.98]; }
-    .btn-link { @apply text-emerald-600 bg-transparent hover:text-emerald-800 hover:underline p-0 focus:ring-0 dark:text-emerald-400 shadow-none; }
-
-    .form-input { @apply w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm transition-colors focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:disabled:bg-slate-700; }
-    .form-label { @apply block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 dark:text-slate-300; }
-    .card { @apply bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden dark:bg-slate-800 dark:border-slate-700/80; }
-
-    .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide; }
-
-    .table-th { @apply px-4 py-3 bg-slate-50 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200 whitespace-nowrap dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700; }
-    .table-td { @apply px-4 py-3 text-xs sm:text-sm text-slate-700 border-b border-slate-100 whitespace-nowrap dark:text-slate-300 dark:border-slate-700/60; }
-
-    .nav-item { @apply flex items-center gap-3 w-full px-3.5 py-2.5 mb-1 rounded-xl text-emerald-100/90 hover:bg-emerald-800 hover:text-white transition-all duration-200 text-xs sm:text-sm font-medium; }
-    .nav-item.active { @apply bg-emerald-700 text-white font-bold shadow-sm; }
-
-    .modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm; }
-    .modal-box { @apply bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] dark:bg-slate-800 border border-slate-200 dark:border-slate-700; }
-    .modal-header { @apply px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/70 dark:bg-slate-800/90 dark:border-slate-700; }
-    .modal-footer { @apply px-6 py-4 border-t border-slate-100 bg-slate-50/70 flex justify-end gap-2.5 shrink-0 dark:bg-slate-800/90 dark:border-slate-700; }
-
-    .skeleton { @apply animate-pulse bg-slate-200 rounded-xl dark:bg-slate-700; }
-    .empty-state { @apply text-center py-12 px-4 text-slate-400 dark:text-slate-500; }
-  }
-
-  [v-cloak] { display: none; }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-  /* Modal Transitions */
-  .modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
-  .modal-enter-from, .modal-leave-to { opacity: 0; }
-  .modal-enter-active .modal-box, .modal-leave-active .modal-box { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-  .modal-enter-from .modal-box, .modal-leave-to .modal-box { transform: scale(0.96); }
-
-  /* Toast Transitions */
-  .toast-enter-active, .toast-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-  .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(24px); }
-</style>
-
+  <?!= include('A0_Head'); ?>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased dark:bg-gray-900 dark:text-gray-100 selection:bg-brand-500 selection:text-white">
   <div id="app" v-cloak>
-    
-    <!-- ================= LAYOUT & MODULAR VIEWS ================= -->
-    <?!= include('V_Layout'); ?>
+    <?!= include('V_Shell'); ?>
+    <?!= include('V_Portal'); ?>
+    <!-- ================= 2. MODUL: MANAJEMEN AKSES & USER ================= -->
+    <?!= include('V_Akses'); ?>
+    <!-- ================= 3. MODUL: STORAGE & NOTIFIKASI ================= -->
+    <?!= include('V_Layanan'); ?>
+    <!-- ================= 4. MODUL: AUDIT & PENGATURAN GLOBAL ================= -->
+    <?!= include('V_Sistem'); ?>
+
+    <!-- penutup fragmen V_Shell: div konten, </main>, div wrapper layout -->
+    </div>
+    </main>
+  </div>
 
     <!-- ================= MODALS ================= -->
-    <teleport to="body">
-
-      <!-- Confirm Dialog -->
-      <transition name="modal">
-        <div v-if="showConfirm" class="modal-overlay" @click.self="showConfirm=false; confirmAction=null">
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden text-center p-6 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 transform transition-all scale-100">
-            <div class="w-16 h-16 rounded-full bg-rose-50 border-4 border-rose-100 text-rose-500 flex items-center justify-center mx-auto mb-4 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400">
-              <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-2 dark:text-white">Konfirmasi Tindakan</h3>
-            <p class="text-sm text-slate-500 mb-6 dark:text-slate-400 leading-relaxed">{{ confirmMessage }}</p>
-            <div class="flex justify-center gap-3">
-              <button @click="showConfirm=false; confirmAction=null" class="btn btn-secondary w-full py-2.5">Batal</button>
-              <button @click="executeConfirm" class="btn btn-danger w-full py-2.5 font-bold">Ya, Lanjutkan</button>
-            </div>
-          </div>
-        </div>
-      </transition>
-
-    </teleport>
-
-    <!-- Toast -->
-    <teleport to="body">
-      <div class="fixed bottom-4 md:bottom-auto md:top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] md:w-full pointer-events-none">
-        <transition-group name="toast">
-          <div v-for="toast in toasts" :key="toast.id" class="pointer-events-auto shadow-xl rounded-xl p-4 flex items-start justify-between border-l-4 bg-white text-slate-800 dark:bg-gray-800 dark:text-slate-200"
-               :class="{'border-emerald-500': toast.type === 'success', 'border-rose-500': toast.type === 'error', 'border-amber-500': toast.type === 'warning'}">
-            <div class="flex items-center gap-3">
-              <i :class="{'fa-solid fa-circle-check text-emerald-500': toast.type === 'success', 'fa-solid fa-circle-xmark text-rose-500': toast.type === 'error', 'fa-solid fa-triangle-exclamation text-amber-500': toast.type === 'warning'}" class="text-xl drop-shadow-sm"></i>
-              <span class="text-sm font-medium leading-tight">{{ toast.message }}</span>
-            </div>
-            <button @click="removeToast(toast.id)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors ml-4"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-        </transition-group>
-      </div>
-    </teleport>
-    
+    <?!= include('V_Modals'); ?>
   </div>
 
   <!-- ================= VUE 3 APPLICATION SCRIPT ================= -->
-  <!-- Safe storage (pola yang sama dengan AppCore CDN v2.6.1+): sebagian
-       browser menolak akses storage pada konteks iframe lintas-site atau
-       cookie pihak ketiga diblokir. Jatuh ke memori bila ditolak. -->
+  <!-- parameter redirect dari server (root template) -->
+  <script>window.__REDIRECT_PARAM__ = '<?!= redirect ?>';</script>
   <?!= include('J_State'); ?>
   <?!= include('J_Helpers'); ?>
   <?!= include('J_Api'); ?>
