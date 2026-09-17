@@ -42,10 +42,14 @@ const app = createApp(Object.assign({}, SIPlatformMixin, {
       beforeUnmount() {
         window.removeEventListener('resize', this.handleResize);
         window.removeEventListener('keydown', this.handleKeydown);
-        if (this.chartInstance) this.chartInstance.destroy();
       },
 
 }));
+
+  // Registrasi komponen kit frontend-cdn v2.7.5 (selaras si-kompetensi)
+  Object.keys(window.AppComponents || {}).forEach(function (n) {
+    if (n !== 'version') app.component(n, window.AppComponents[n]);
+  });
     app.component('pagination-controls', {
       props: {
         category: String,
@@ -59,10 +63,10 @@ const app = createApp(Object.assign({}, SIPlatformMixin, {
             Halaman <span class="text-slate-900 dark:text-white font-semibold">{{ currentPage }}</span> dari <span class="text-slate-900 dark:text-white font-semibold">{{ totalPages }}</span>
           </span>
           <div class="flex gap-2">
-            <button @click="$emit('prev')" :disabled="currentPage === 1" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
+            <button type="button" @click="$emit('prev')" :disabled="currentPage === 1" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
               <i class="fa-solid fa-chevron-left text-xs"></i> Prev
             </button>
-            <button @click="$emit('next')" :disabled="currentPage >= totalPages" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
+            <button type="button" @click="$emit('next')" :disabled="currentPage >= totalPages" class="btn btn-secondary py-1 px-2.5 text-xs flex items-center gap-1 shadow-sm">
               Next <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
           </div>
