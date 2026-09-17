@@ -523,3 +523,17 @@ function clearReadCacheKeys_() {
 function clearAllCache() { CacheService.getScriptCache().removeAll(clearReadCacheKeys_()); }
 function clearAllReadCache() { clearAllCache(); }
 function cleanupLocksAndCache() { clearAllCache(); console.log('Pembersihan selesai.'); }
+
+function auditSalinan() {
+  var nama = ['Index','A0_Head','A0_Style','V_Shell','V_Modals','V_Portal',
+              'V_Akses','V_Layanan','V_Sistem','J_State','J_Helpers','J_Api',
+              'J_Actions','J_Export','J_App'];
+  nama.forEach(function (n) {
+    try {
+      var c = HtmlService.createTemplateFromFile(n).getRawContent();
+      Logger.log(n + ' | ' + c.length + ' karakter | ekor: ' + c.slice(-40).replace(/\n/g, ' '));
+    } catch (e) {
+      Logger.log(n + ' | ERROR: ' + e.message);
+    }
+  });
+}
