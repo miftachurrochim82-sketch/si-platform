@@ -524,8 +524,11 @@ function clearAllCache() { CacheService.getScriptCache().removeAll(clearReadCach
 function clearAllReadCache() { clearAllCache(); }
 function cleanupLocksAndCache() { clearAllCache(); console.log('Pembersihan selesai.'); }
 
+
+// Audit salinan: cek panjang + ekor isi tiap file HTML di GAS (penangkal salah-paste).
+// Daftar file disegarkan 2026-09-17: A0_Style → A0_Tw (Track D).
 function auditSalinan() {
-  var nama = ['Index','A0_Head','A0_Style','V_Shell','V_Modals','V_Portal',
+  var nama = ['Index','A0_Head','A0_Tw','V_Shell','V_Modals','V_Portal',
               'V_Akses','V_Layanan','V_Sistem','J_State','J_Helpers','J_Api',
               'J_Actions','J_Export','J_App'];
   nama.forEach(function (n) {
