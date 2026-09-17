@@ -267,8 +267,8 @@ function removePermissionFromRole_(roleId, permissionId, context) {
   } finally {
     try { lock.releaseLock(); } catch (e) {}
   }
-  logAudit_({ actorId: context.user.id, action: 'role.permissions.remove', resourceType: 'role', resourceId: permissionId, result: 'SUCCESS', metadata: { permissionId: permissionId } });
-  return { role_id: roleId, rolepermission_id: permissionId };
+  logAudit_({ actorId: context.user.id, action: 'role.permissions.remove', resourceType: 'role', resourceId: roleId, result: 'SUCCESS', metadata: { permissionId: permissionId } });
+  return { role_id: roleId, permission_id: permissionId };
 }
 
 // ==================== PERMISSION HANDLER ====================
@@ -559,7 +559,7 @@ function healthCheck_() {
   try { getSpreadsheet_(); checks.spreadsheet = { status: 'OK' }; } catch (e) { checks.spreadsheet = { status: 'ERROR', message: e.message }; }
   try { DriveApp.getFolderById(getConfig_('DRIVE_ROOT_FOLDER_ID', DRIVE_ROOT_FOLDER_ID)); checks.drive = { status: 'OK' }; } catch (e) { checks.drive = { status: 'ERROR', message: e.message }; }
   try { checks.notificationQueue = { status: 'OK', queuedCount: findAll_(SHEETS.NOTIFICATIONS, { status: 'queued' }).length }; } catch (e) { checks.notificationQueue = { status: 'ERROR', message: e.message }; }
-  var allOk = Object.keys(checks).every(function(k) { return checks[k].status === 'OK' });
+  var allOk = Object.keys(checks).every(function(k) { return checks[k].status === 'OK'; });
   return { status: allOk ? 'HEALTHY' : 'DEGRADED', checks: checks, timestamp: new Date().toISOString() };
 }
 
@@ -700,7 +700,13 @@ function listRegisteredApps_(query, context) {
     apps = REGISTERED_APPS.map(function(app) { return { code: app.code, name: app.name, description: app.description || '', url: app.url || '', status: 'active', icon: app.icon || '' }; });
   } else {
     apps = apps.filter(function(a) { return String(a.status).toLowerCase() === 'active'; })
-      .map(function(app) { var c = Object.assign({}, app); c.url = app.redirect_uri || app.url || ''; c.icon = app.icon_url || app.icon || ''; return c; });
+      .map(function(app) {
+        var c = Object.assign({}, app);
+        var rawUrl = String(app.redirect_uri || app.url || '').replace(/^[+\s]+|[+\s]+$/g, '').trim();
+        c.url = rawUrl;
+        c.icon = app.icon_url || app.icon || '';
+        return c;
+      });
   }
   return { data: apps };
 }
@@ -708,7 +714,12 @@ function listRegisteredApps_(query, context) {
 // ==================== ENTRY POINT HTTP ====================
 function doGet(e) {
   var redirect = (e && e.parameter && e.parameter.redirect) || '';
-  var html = HtmlService.createTemplateFromFile('Index');
+  var html;
+  try {
+    html = HtmlService.createTemplateFromFile('Index');
+  } catch (err) {
+    html = HtmlService.createTemplateFromFile('index');
+  }
   html.redirect = redirect;
   return html.evaluate()
     .setTitle('SI Platform - User Management')
@@ -717,7 +728,11 @@ function doGet(e) {
 }
 
 function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+  try {
+    return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
+  } catch (err) {
+    return HtmlService.createTemplateFromFile(filename.toLowerCase()).evaluate().getContent();
+  }
 }
 
 // F2: token dibaca dari 3 tempat (body.token, body.data.token, ?token=) — sejajar dengan ticket.
@@ -774,7 +789,7 @@ function handleApiRequest_(request) {
       }
       case (/^\/api\/v1\/users\/[^/]+$/).test(path) && method === 'DELETE': {
         var userId2 = path.split('/').pop();
-        return executeHandler_(function() { return deleteUser_(userId2, data, context); }, context);
+        return executeHandler_(function() { return deleteUser_(userId2, context); }, context);
       }
       case (/^\/api\/v1\/users\/[^/]+\/roles$/).test(path) && method === 'POST': {
         var userId3 = path.split('/')[4];
