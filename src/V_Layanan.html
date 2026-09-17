@@ -3,18 +3,12 @@
 <!-- 1. HALAMAN: FILE STORAGE -->
 <div v-if="currentPage === 'files' && !loading" class="space-y-4">
   <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700">
-    <div class="w-full sm:w-auto flex items-center gap-2">
-      <i class="fa-solid fa-filter text-slate-400 text-xs"></i>
-      <select v-model="filters.files.folder_id" @change="fetchData" class="form-input bg-slate-50 dark:bg-slate-900 w-full sm:w-64">
-        <option value="">Semua Folder (Root)</option>
-        <option v-for="folder in (data.folders || [])" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
-      </select>
-    </div>
+    <app-filter-bar :filters="filesFilterDefs" v-model="filters.files" @change="onFilesFilterChange" class="w-full sm:w-auto"></app-filter-bar>
     <div class="flex gap-2 w-full sm:w-auto">
-      <button v-if="(selectedFiles || []).length" @click="bulkDeleteFiles" class="btn btn-danger w-full sm:w-auto">
+      <button type="button" v-if="(selectedFiles || []).length" @click="bulkDeleteFiles" class="btn btn-danger w-full sm:w-auto">
         <i class="fa-solid fa-trash-can"></i> Hapus Terpilih
       </button>
-      <button @click="openUploadModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20">
+      <button type="button" @click="openUploadModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20">
         <i class="fa-solid fa-upload"></i> Upload Berkas
       </button>
     </div>
@@ -34,11 +28,20 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!(data.files || []).length">
+        <template v-for="n in 5" :key="'skel-files-'+n">
+          <tr v-if="loading && !(data.files || []).length">
+            <td colspan="6" class="p-0">
+              <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" :style="'width: ' + (45 + (n % 4) * 15) + '%'"></div>
+              </div>
+            </td>
+          </tr>
+        </template>
+        <tr v-if="!loading && !(data.files || []).length">
           <td colspan="6" class="empty-state">
             <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-xs font-semibold">Belum ada file yang diunggah.</p>
-            <button @click="openUploadModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-upload"></i> Upload File Pertama</button>
+            <button type="button" @click="openUploadModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-upload"></i> Upload File Pertama</button>
           </td>
         </tr>
         <tr v-for="file in (data.files || [])" :key="file.id" class="hover:bg-emerald-50/40 dark:hover:bg-slate-700/50 group">
@@ -60,8 +63,8 @@
           <td class="table-td text-slate-500 text-xs dark:text-slate-400">{{ formatDate(file.created_at) }}</td>
           <td class="table-td">
             <div class="flex items-center justify-end gap-1.5 pr-2 sm:pr-4">
-              <button @click="downloadFile(file.id)" class="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400" title="Unduh File"><i class="fa-solid fa-download text-xs"></i></button>
-              <button @click="deleteFile(file.id)" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400" title="Hapus File"><i class="fa-solid fa-trash-can text-xs"></i></button>
+              <button type="button" @click="downloadFile(file.id)" class="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400" title="Unduh File"><i class="fa-solid fa-download text-xs"></i></button>
+              <button type="button" @click="deleteFile(file.id)" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400" title="Hapus File"><i class="fa-solid fa-trash-can text-xs"></i></button>
             </div>
           </td>
         </tr>
@@ -79,87 +82,63 @@
       <p class="text-xs text-slate-500 dark:text-slate-400">Log pengiriman email, WhatsApp, dan push message.</p>
     </div>
     <div class="flex gap-2 w-full sm:w-auto">
-      <button @click="openCreateTemplateModal" class="btn btn-secondary w-full sm:w-auto"><i class="fa-solid fa-plus"></i> Template</button>
-      <button @click="openSendNotificationModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20"><i class="fa-solid fa-paper-plane"></i> Kirim Pesan</button>
+      <button type="button" @click="openCreateTemplateModal" class="btn btn-secondary w-full sm:w-auto"><i class="fa-solid fa-plus"></i> Template</button>
+      <button type="button" @click="openSendNotificationModal" class="btn btn-primary w-full sm:w-auto shadow-emerald-600/20"><i class="fa-solid fa-paper-plane"></i> Kirim Pesan</button>
     </div>
   </div>
   
-  <div class="card overflow-x-auto">
-    <table class="min-w-full">
-      <thead>
-        <tr>
-          <th class="table-th">Subjek Pesan</th>
-          <th class="table-th">Status</th>
-          <th class="table-th">Channel</th>
-          <th class="table-th">Waktu Kirim</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-        <tr v-if="!(paginatedNotifications || []).length">
-          <td colspan="4" class="empty-state">
-            <i class="fa-solid fa-bell text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
-            <p class="text-xs font-semibold">Belum ada riwayat notifikasi.</p>
-            <button @click="openSendNotificationModal" class="btn btn-primary mt-4 text-xs"><i class="fa-solid fa-paper-plane"></i> Kirim Notifikasi</button>
-          </td>
-        </tr>
-        <tr v-for="notif in (paginatedNotifications || [])" :key="notif.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-          <td class="table-td font-bold text-slate-900 dark:text-white">{{ notif.subject }}</td>
-          <td class="table-td">
-            <span class="badge" :class="notif.status === 'sent' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'">{{ notif.status }}</span>
-          </td>
-          <td class="table-td text-slate-500 dark:text-slate-400 capitalize"><i class="fa-solid fa-envelope mr-1 text-xs"></i> {{ notif.channel }}</td>
-          <td class="table-td text-slate-500 text-xs dark:text-slate-400">{{ formatDate(notif.created_at) }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <pagination-controls category="notifications" :current-page="currentPages.notifications" :total-pages="notificationTotalPages" @prev="prevPage('notifications')" @next="nextPage('notifications')"></pagination-controls>
-  </div>
+  <app-crud-table
+    :items="paginatedNotifications || []"
+    :columns="[{ key: 'subject', label: 'Subjek Pesan' }, { key: 'status', label: 'Status' }, { key: 'channel', label: 'Channel' }, { key: 'created_at', label: 'Waktu Kirim' }]"
+    :page="currentPages.notifications"
+    :total-pages="notificationTotalPages"
+    empty-text="Belum ada riwayat notifikasi."
+    empty-icon="fa-solid fa-bell"
+    @change-page="p => goToPage('notifications', p)">
+    <template #row="{ row: notif }">
+      <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">{{ notif.subject }}</td>
+      <td class="py-3 px-4">
+        <app-badge :status="notif.status === 'sent' ? 'approved' : (notif.status === 'failed' ? 'rejected' : 'menunggu')" :label="notif.status === 'sent' ? 'Terkirim' : (notif.status === 'failed' ? 'Gagal' : 'Antre')"></app-badge>
+      </td>
+      <td class="py-3 px-4 text-slate-500 dark:text-slate-400 capitalize"><i class="fa-solid fa-envelope mr-1 text-xs"></i> {{ notif.channel }}</td>
+      <td class="py-3 px-4 text-slate-500 text-xs dark:text-slate-400">{{ formatDate(notif.created_at) }}</td>
+    </template>
+  </app-crud-table>
 
   <div class="mt-8">
     <h3 class="text-base font-bold text-slate-900 mb-3 dark:text-white">Daftar Template Pesan</h3>
-    <div class="card overflow-x-auto">
-      <table class="min-w-full">
-        <thead>
-          <tr>
-            <th class="table-th">Kode Template</th>
-            <th class="table-th">Nama</th>
-            <th class="table-th">Channel</th>
-            <th class="table-th text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-          <tr v-if="!(paginatedTemplates || []).length">
-            <td colspan="4" class="empty-state">
-              <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
-              <p class="text-xs font-semibold">Belum ada template tersimpan.</p>
-            </td>
-          </tr>
-          <tr v-for="tpl in (paginatedTemplates || [])" :key="tpl.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-            <td class="table-td font-mono text-xs text-emerald-700 font-bold dark:text-emerald-400">{{ tpl.code }}</td>
-            <td class="table-td font-bold text-slate-900 dark:text-white">{{ tpl.name }}</td>
-            <td class="table-td text-slate-500 dark:text-slate-400 capitalize">{{ tpl.channel }}</td>
-            <td class="table-td text-right">
-              <button @click="openEditTemplateModal(tpl)" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <pagination-controls category="templates" :current-page="currentPages.templates" :total-pages="totalPages.templates" @prev="prevPage('templates')" @next="nextPage('templates')"></pagination-controls>
-    </div>
+    <app-crud-table
+      :items="paginatedTemplates || []"
+      :columns="[{ key: 'code', label: 'Kode Template' }, { key: 'name', label: 'Nama' }, { key: 'channel', label: 'Channel' }, { key: 'aksi', label: 'Aksi', thClass: 'text-right' }]"
+      :page="currentPages.templates"
+      :total-pages="totalPages.templates"
+      :total-data="(data.notificationTemplates || []).length"
+      empty-text="Belum ada template tersimpan."
+      @change-page="p => goToPage('templates', p)">
+      <template #row="{ row: tpl }">
+        <td class="py-3 px-4 font-mono text-xs text-emerald-700 font-bold dark:text-emerald-400">{{ tpl.code }}</td>
+        <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">{{ tpl.name }}</td>
+        <td class="py-3 px-4 text-slate-500 dark:text-slate-400 capitalize">{{ tpl.channel }}</td>
+        <td class="py-3 px-4 text-right">
+          <button type="button" @click="openEditTemplateModal(tpl)" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
+        </td>
+      </template>
+    </app-crud-table>
   </div>
 </div>
 
 <!-- ================= MODALS UNTUK STORAGE & NOTIFIKASI ================= -->
 <teleport to="body">
   <!-- Upload Modal -->
-  <transition name="modal">
-    <div v-if="showUploadModal" class="modal-overlay" @click.self="showUploadModal=false">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3 class="text-base font-bold dark:text-white">Upload Dokumen</h3>
-          <button @click="showUploadModal=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div class="p-6 overflow-y-auto space-y-4">
+  <app-modal
+    :show="showUploadModal"
+    title="Upload Dokumen"
+    icon="fa-solid fa-cloud-arrow-up"
+    :loading="uploading"
+    confirm-text="Mulai Upload"
+    :show-confirm="!!uploadData.data_base64"
+    @close="showUploadModal = false"
+    @confirm="uploadFile">
           <div>
             <label class="form-label">Pilih Dokumen</label>
             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-2xl hover:border-emerald-500 hover:bg-emerald-50/20 transition-all bg-slate-50 relative group dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-emerald-500"
@@ -182,7 +161,7 @@
                 <p class="font-bold truncate">{{ uploadData.file_name }}</p>
                 <p class="text-[10px] opacity-80">{{ formatBytes(uploadData.file_size) }}</p>
               </div>
-              <button @click="uploadData.file_name=''" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-circle-xmark text-lg"></i></button>
+              <button type="button" @click="uploadData.file_name=''" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-circle-xmark text-lg"></i></button>
             </div>
           </div>
           <div>
@@ -192,28 +171,18 @@
               <option v-for="folder in (data.folders || [])" :key="folder.id" :value="folder.id">{{ folder.name }}</option>
             </select>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="showUploadModal=false" class="btn btn-secondary">Batal</button>
-          <button @click="uploadFile" class="btn btn-primary" :disabled="uploading || !uploadData.data_base64">
-            <i v-if="uploading" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
-            <i v-else class="fa-solid fa-upload text-xs"></i>
-            {{ uploading ? 'Proses Upload...' : 'Mulai Upload' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </transition>
+  </app-modal>
 
   <!-- Send Notification Modal -->
-  <transition name="modal">
-    <div v-if="showSendNotificationModal" class="modal-overlay" @click.self="showSendNotificationModal=false">
-      <div class="modal-box max-w-xl">
-        <div class="modal-header">
-          <h3 class="text-base font-bold dark:text-white">Kirim Pesan Notifikasi</h3>
-          <button @click="showSendNotificationModal=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div class="p-6 overflow-y-auto space-y-4">
+  <app-modal
+    :show="showSendNotificationModal"
+    title="Kirim Pesan Notifikasi"
+    icon="fa-solid fa-paper-plane"
+    size="xl"
+    :loading="sendingNotification"
+    confirm-text="Kirim Sekarang"
+    @close="showSendNotificationModal = false"
+    @confirm="sendNotification">
           <div>
             <label class="form-label">Pilih Template (Opsional)</label>
             <select v-model="notificationForm.template_code" @change="onTemplateChange" class="form-input">
@@ -247,27 +216,19 @@
             <span class="font-bold block mb-1">Pratinjau Pesan Terkirim:</span>
             <p class="whitespace-pre-wrap">{{ notificationPreview }}</p>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="showSendNotificationModal=false" class="btn btn-secondary">Batal</button>
-          <button @click="sendNotification" class="btn btn-primary" :disabled="sendingNotification">
-            <i v-if="sendingNotification" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
-            {{ sendingNotification ? 'Mengirim...' : 'Kirim Sekarang' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </transition>
+  </app-modal>
 
   <!-- Template Modal -->
-  <transition name="modal">
-    <div v-if="showTemplateModal" class="modal-overlay" @click.self="showTemplateModal=false">
-      <div class="modal-box max-w-xl">
-        <div class="modal-header">
-          <h3 class="text-base font-bold dark:text-white">{{ templateModalMode === 'create' ? 'Buat Template Baru' : 'Edit Template' }}</h3>
-          <button @click="showTemplateModal=false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div class="p-6 overflow-y-auto space-y-4">
+  <app-modal
+    :show="showTemplateModal"
+    :title="templateModalMode === 'create' ? 'Buat Template Baru' : 'Edit Template'"
+    icon="fa-solid fa-file-lines"
+    size="xl"
+    :loading="savingTemplate"
+    confirm-text="Simpan Template"
+    :show-confirm="isTemplateFormValid"
+    @close="showTemplateModal = false"
+    @confirm="saveTemplate">
           <div>
             <label class="form-label">Kode Template (Unik)</label>
             <input v-model="templateForm.code" class="form-input font-mono" :disabled="templateModalMode === 'edit'" placeholder="NOTIF_VERIFIKASI">
@@ -288,15 +249,5 @@
             <label class="form-label">Daftar Variabel (Pisahkan Koma)</label>
             <input v-model="templateForm.variables" class="form-input font-mono text-xs" placeholder="nama, tanggal, status">
           </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="showTemplateModal=false" class="btn btn-secondary">Batal</button>
-          <button @click="saveTemplate" class="btn btn-primary" :disabled="savingTemplate || !isTemplateFormValid">
-            <i v-if="savingTemplate" class="fa-solid fa-circle-notch animate-spin text-xs"></i>
-            {{ savingTemplate ? 'Menyimpan...' : 'Simpan Template' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </transition>      
+  </app-modal>      
 </teleport>
