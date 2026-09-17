@@ -10,9 +10,9 @@ Aplikasi web portal utama berbasis **Google Apps Script (GAS)**, **Vue 3**, dan 
 | Properti | Nilai | Keterangan |
 |---|---|---|
 | **App Code** | `SIPLATFORM` | Kode identitas aplikasi portal utama |
-| **Arsitektur Tampilan** | `2-File HTML System (Single Include)` | `Index.html` (Shell & Bootloader) + `V_Layout.html` (Seluruh Modul Tampilan) |
+| **Arsitektur Tampilan** | `Multi-Include HTML System (15 berkas)` | `Index.html` (TOC include) → A0_Head/A0_Tw, V_Shell, V_Portal, V_Akses, V_Layanan, V_Sistem, V_Modals, J_State→J_App |
 | **Backend Engine** | `Google Apps Script V8` | High-performance Caching & Transactional Lock Engine |
-| **Frontend CDN** | `frontend-cdn@v2.6.4` (CSS only — `app-common.min.css`, by design) | Shared UI Tokens & Design Components |
+| **Frontend CDN** | `frontend-cdn@v2.7.5` (CSS + JS — `app-common.min.css` + `app-components.min.js`) | Shared UI Tokens & Komponen Kit (sidebar, header, stat-card, badge, filter-bar, chart, crud-table, modal, skeleton, empty-state) |
 | **Runtime** | `V8 (GAS)` | Modern JavaScript ES6+ Engine |
 | **TimeZone** | `Asia/Jakarta` | WIB (Waktu Indonesia Barat) |
 
@@ -45,11 +45,27 @@ si-platform/
     ├── 01_Config.gs                # Konfigurasi konstanta, sheet schemas, headers, cache keys
     ├── 02_SetupAndSeed.gs          # Setup basis data, seeder permissions, user admin, triggers
     ├── 03_DataAndAuth.gs           # Database engine, password hashing, session management
-    ├── 04_HandlerAndRouter.gs      # API router, SSO ticket issuance, CRUD handlers, doGet/doPost
-    ├── 05_TestSuite.gs             # Regression & integration test suite (20 test cases)
+    ├── 04a_HandlerAkses.gs         # Handler USER, ROLE, PERMISSION (Track C split)
+    ├── 04b_HandlerLayanan.gs       # Handler FILE & FOLDER, NOTIFIKASI (Track C split)
+    ├── 04c_HandlerSistem.gs        # Handler SETTING, HEALTH, AUDIT, DASHBOARD (Track C split)
+    ├── 04d_Router.gs               # Tiket SSO lintas-app, apps terdaftar, doGet/doPost/router
+    ├── 05_TestSuite.gs             # Regression & integration test suite (21 test cases)
     │
-    ├── Index.html                  # [HTML 1] Root SPA Vue 3, layout shell, AppCore & single include
-    └── V_Layout.html               # [HTML 2] Seluruh Modul UI (Login, Sidebar, Header, Apps, User, Role, Storage, Audit, Settings)
+    ├── Index.html                  # Root SPA Vue 3 — daftar isi include
+    ├── A0_Head.html                # <head>: fonts, Chart.js, Vue 3.5.42, CDN kit v2.7.5
+    ├── A0_Tw.html                  # Tailwind v3.4.17 COMPILED (base+utilities+@apply tokens)
+    ├── V_Shell.html                # Login screen + app-sidebar + app-header + main open
+    ├── V_Portal.html               # Dashboard (app-stat-card, app-chart-bar, health) + katalog apps
+    ├── V_Akses.html                # Modul users/roles/permissions + 4 modal kit
+    ├── V_Layanan.html              # Modul files/notifications/templates + 3 modal kit
+    ├── V_Sistem.html               # Modul audit/settings + 2 modal kit
+    ├── V_Modals.html               # Dialog konfirmasi global (app-modal) + toast
+    ├── J_State.html                # safeStorage, data(), computed (filter defs, chart, menu kit)
+    ├── J_Helpers.html              # util: navigasi, paginasi (goToPage), dark-mode, format
+    ├── J_Api.html                  # callServer + fetchData per kategori
+    ├── J_Actions.html              # aksi CRUD, handler filter-bar, onCloseMobile
+    ├── J_Export.html               # ekspor CSV
+    └── J_App.html                  # createApp + registrasi komponen AppComponents + mount
 ```
 
 ---
@@ -122,7 +138,7 @@ si-platform/
 ### Opsi B: Salin Manual ke Editor Google Apps Script
 1. Buka proyek di [Google Apps Script Editor](https://script.google.com).
 2. Buat berkas-berkas sesuai dengan struktur di folder `src/`:
-   * 5 Berkas Script (`.gs`): `01_Config.gs` s/d `05_TestSuite.gs`.
-   * 2 Berkas HTML (`.html`): `Index.html` dan `V_Layout.html`.
+   * 8 Berkas Script (`.gs`): `01_Config`, `02_SetupAndSeed`, `03_DataAndAuth`, `04a`–`04d`, `05_TestSuite`.
+   * 15 Berkas HTML: `Index`, `A0_Head`, `A0_Tw`, `V_Shell`, `V_Portal`, `V_Akses`, `V_Layanan`, `V_Sistem`, `V_Modals`, `J_State`, `J_Helpers`, `J_Api`, `J_Actions`, `J_Export`, `J_App`.
 3. Salin kode dari repositori GitHub ke editor Apps Script.
 4. Klik **Deploy** ➔ **New deployment** ➔ Pilih tipe **Web app** ➔ Akses: **Anyone**.
