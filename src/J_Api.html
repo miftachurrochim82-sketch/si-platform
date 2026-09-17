@@ -77,7 +77,6 @@ window.SIPlatformApi = {
                 if (fetchId === this.fetchId) {
                   if (statsRes.success) {
                     this.dashboardStats = statsRes.data || {};
-                    this.$nextTick(() => { this.updateChart(); });
                   }
                   if (appsRes.success) this.data.apps = appsRes.data || [];
                   if (healthRes.success) this.healthStatus = healthRes.data || {};
@@ -108,7 +107,7 @@ window.SIPlatformApi = {
                 break;
               }
               case 'roles': {
-                const res = await this.callServer('GET', '/api/v1/roles', {}, { search: this.roleSearch });
+                const res = await this.callServer('GET', '/api/v1/roles', {}, { search: this.roleFilters.q });
                 if (fetchId === this.fetchId) {
                   if (res.success) this.data.roles = res.data || [];
                   else this.errorMessage = res.error?.message || 'Gagal memuat roles.';
@@ -116,7 +115,7 @@ window.SIPlatformApi = {
                 break;
               }
               case 'permissions': {
-                const res = await this.callServer('GET', '/api/v1/permissions', {}, { search: this.permissionSearch });
+                const res = await this.callServer('GET', '/api/v1/permissions', {}, { search: this.permFilters.q });
                 if (fetchId === this.fetchId) {
                   if (res.success) this.data.permissions = res.data || [];
                   else this.errorMessage = res.error?.message || 'Gagal memuat permissions.';
